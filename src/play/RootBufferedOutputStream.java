@@ -22,28 +22,17 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
     }
 
     @Override
-    public void writeObjectRef(RootObject o) throws IOException {
+    public void writeObject(RootObject o) throws IOException {
         if (o == null) {
             writeInt(0);
         } else {
-            writeInt(0x40000000 | o.length(this));
             o.write(this);
         }
     }
 
     @Override
-    public int refLength(RootObject o) throws IOException {
-        return o == null ? 4 : 4 + o.length(this);
-    }
-
-    @Override
-    public void writeObject(RootObject o) throws IOException {
-        o.write(this);
-    }
-
-    @Override
     public int length(RootObject o) throws IOException {
-        return o.length(this);
+        return o == null ? 4 : o.length(this);
     }
 
     @Override

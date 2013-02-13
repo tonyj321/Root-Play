@@ -17,6 +17,7 @@ class TObjString extends TFile.TObject {
 
     @Override
     public void write(RootOutput out) throws IOException {
+        out.writeInt(0x40000000 | (length(out)-4));
         out.writeShort(version);
         super.write(out);
         out.writeObject(string);
@@ -24,7 +25,7 @@ class TObjString extends TFile.TObject {
 
     @Override
     public int length(RootOutput out) throws IOException {
-        return 2+super.length(out)+string.length(out);
+        return 6+super.length(out)+string.length(out);
     }
     
 }

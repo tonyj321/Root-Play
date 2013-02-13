@@ -443,6 +443,7 @@ class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | myLength(out));
             out.writeShort(version);
             super.write(out);
             out.writeObject(name);
@@ -451,8 +452,16 @@ class TFile implements Closeable {
 
         @Override
         public int length(RootOutput out) throws IOException {
+            return 4 + myLength(out);
+        }
+
+        private int myLength(RootOutput out) throws IOException {
             return 2 + super.length(out) + out.length(name) + out.length(title);
         }
+
+        public void setTitle(TString title) {
+            this.title = title;
+        }     
     }
 
     static class TAttLine implements RootObject {
@@ -464,6 +473,7 @@ class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | (length(out) - 4));
             out.writeShort(version);
             out.writeShort(fLineColor);
             out.writeShort(fLineStyle);
@@ -472,7 +482,7 @@ class TFile implements Closeable {
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 8;
+            return 12;
         }
     }
 
@@ -484,6 +494,7 @@ class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | (length(out) - 4));
             out.writeShort(version);
             out.writeShort(fFillColor);
             out.writeShort(fFillStyle);
@@ -491,7 +502,7 @@ class TFile implements Closeable {
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 6;
+            return 10;
         }
     }
 
@@ -504,6 +515,7 @@ class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | (length(out) - 4));
             out.writeShort(version);
             out.writeShort(fMarkerColor);
             out.writeShort(fMarkerStyle);
@@ -512,7 +524,7 @@ class TFile implements Closeable {
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 10;
+            return 14;
         }
     }
 
@@ -533,6 +545,7 @@ class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | (length(out) - 4));
             out.writeShort(version);
             out.writeInt(fNdivisions);
             out.writeShort(fAxisColor);
@@ -549,7 +562,7 @@ class TFile implements Closeable {
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 36;
+            return 40;
         }
     }
 
@@ -578,24 +591,25 @@ class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | (length(out) - 4));
             out.writeShort(version);
-            out.writeObjectRef(tNamed);
-            out.writeObjectRef(tAttAxis);
+            out.writeObject(tNamed);
+            out.writeObject(tAttAxis);
             out.writeInt(fNbins);
             out.writeDouble(fXmin);
             out.writeDouble(fXmax);
-            out.writeObjectRef(fXbins);
+            out.writeObject(fXbins);
             out.writeInt(fFirst);
             out.writeInt(fLast);
             out.writeShort(fBits2);
             out.writeShort(fTimeDisplay); // TODO: Check this
-            out.writeObjectRef(fTimeFormat);
-            //out.writeObjectRef(fLabels);
+            out.writeObject(fTimeFormat);
+            //out.writeObject(fLabels);
         }
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 34 + out.refLength(tNamed) + out.refLength(tAttAxis) + out.refLength(fXbins) + out.refLength(fTimeFormat) /*+ out.refLength(fLabels)*/;
+            return 38 + out.length(tNamed) + out.length(tAttAxis) + out.length(fXbins) + out.length(fTimeFormat) /*+ out.length(fLabels)*/;
         }
     }
 
@@ -641,10 +655,9 @@ class TFile implements Closeable {
         }
     }
 
-    static class TH1 implements RootObject {
+    static class TH1 extends TNamed {
 
         private final static int version = 6;
-        private TNamed tNamed;
         private TAttLine tAttLine = new TAttLine();
         private TAttFill tAttFill = new TAttFill();
         private TAttMarker tAttMarker = new TAttMarker();
@@ -678,7 +691,7 @@ class TFile implements Closeable {
         };
 
         TH1(TString name, int nBins, double xMin, double xMax) {
-            tNamed = new TNamed(name, TString.empty);
+            super(name, TString.empty);
             fXaxis = new TAxis(new TString("xaxis"), nBins, xMin, xMax);
             fYaxis = new TAxis(new TString("yaxis"), 1, 0, 1);
             fZaxis = new TAxis(new TString("zAxis"), 1, 0, 1);
@@ -687,15 +700,16 @@ class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | myLength(out));
             out.writeShort(version);
-            out.writeObjectRef(tNamed);
-            out.writeObjectRef(tAttLine);
-            out.writeObjectRef(tAttFill);
-            out.writeObjectRef(tAttMarker);
+            super.write(out);
+            out.writeObject(tAttLine);
+            out.writeObject(tAttFill);
+            out.writeObject(tAttMarker);
             out.writeInt(fNcells);
-            out.writeObjectRef(fXaxis);
-            out.writeObjectRef(fYaxis);
-            out.writeObjectRef(fZaxis);
+            out.writeObject(fXaxis);
+            out.writeObject(fYaxis);
+            out.writeObject(fZaxis);
             out.writeShort(fBarOffset);
             out.writeShort(fBarWidth);
             out.writeDouble(fEntries);
@@ -706,10 +720,10 @@ class TFile implements Closeable {
             out.writeDouble(fMaximum);
             out.writeDouble(fMinimum);
             out.writeDouble(fNormFactor);
-            out.writeObjectRef(fContour);
-            out.writeObjectRef(fSumw2);
+            out.writeObject(fContour);
+            out.writeObject(fSumw2);
             out.writeObject(fOption);
-            out.writeObjectRef(fFunctions);
+            out.writeObject(fFunctions);
             out.writeInt(fBufferSize);
             for (int i = 0; i < fBufferSize; i++) {
                 out.writeInt(fBuffer[i]);
@@ -719,33 +733,60 @@ class TFile implements Closeable {
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 7 + 8 + 64 + out.refLength(tNamed) + out.refLength(tAttLine) + out.refLength(tAttFill) + out.refLength(tAttMarker)
-                    + out.refLength(fXaxis) + out.refLength(fYaxis) + out.refLength(fZaxis) + out.refLength(fContour)
-                    + out.refLength(fSumw2) + out.length(fOption) + out.refLength(fFunctions) + 4 * fBufferSize;
+            return 4 + myLength(out);
+        }
+
+        private int myLength(RootOutput out) throws IOException {
+            return 7 + 8 + 64 + super.length(out) + out.length(tAttLine) + out.length(tAttFill) + out.length(tAttMarker)
+                    + out.length(fXaxis) + out.length(fYaxis) + out.length(fZaxis) + out.length(fContour)
+                    + out.length(fSumw2) + out.length(fOption) + out.length(fFunctions) + 4 * fBufferSize;
+        }
+
+        public void setEntries(double fEntries) {
+            this.fEntries = fEntries;
+        }
+
+        public void setSumw(double fTsumw) {
+            this.fTsumw = fTsumw;
+        }
+
+        public void setSumw2(double fTsumw2) {
+            this.fTsumw2 = fTsumw2;
+        }
+        public void setSumx(double fTsumx) {
+            this.fTsumwx = fTsumx;
+        }
+
+        public void setSumx2(double fTsumx2) {
+            this.fTsumwx2 = fTsumx2;
         }
     }
 
-    static class TH1D implements RootObject {
+    static class TH1D extends TH1 {
 
-        private TH1 th1;
         private TArrayD array;
         private static int version = 1;
 
         TH1D(TString name, int nBins, double xMin, double xMax, double[] data) {
-            th1 = new TH1(name, nBins, xMin, xMax);
+            super(name, nBins, xMin, xMax);
             array = new TArrayD(data);
         }
 
         @Override
         public void write(RootOutput out) throws IOException {
+            out.writeInt(0x40000000 | myLength(out));
             out.writeShort(version);
-            out.writeObjectRef(th1);
+            super.write(out);
             out.writeObject(array);
         }
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 2 + out.refLength(th1) + out.length(array);
+            return 4 + myLength(out);
+        }
+
+        private int myLength(RootOutput out) throws IOException {
+            return 2 + super.length(out) + out.length(array);
         }
     }
 }

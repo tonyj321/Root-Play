@@ -33,13 +33,4 @@ class RootRandomAccessFile extends RandomAccessFile implements RootOutput {
         return tFile.isLargeFile();
     }
 
-    @Override
-    public void writeObjectRef(RootObject o) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int refLength(RootObject o) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 }
