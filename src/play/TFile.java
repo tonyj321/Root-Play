@@ -132,11 +132,12 @@ class TFile implements Closeable {
             for (RootObject object : objects) {
                 buffer.writeObject(object);
             }
+            buffer.close();
             objLen = buffer.size();
             fDatimeC = new TDatime();
             long seekKey = out.getFilePointer();
             fSeekKey.set(seekKey);
-            out.skipBytes(18);
+            out.seek(seekKey+18);
             out.writeObject(fSeekKey);            // Pointer to record itself (consistency check)
             out.writeObject(seekPDir);            // Pointer to directory header
             out.writeObject(className);
