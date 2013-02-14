@@ -7,12 +7,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import play.annotations.Utilities;
 
 /**
- *
+ * Top level class for interacting with a Root file. Currently this implementation
+ * only supports writing.
  * @author tonyj
+ * @see <a href="http://root.cern.ch/download/doc/11InputOutput.pdf">Root Manual Input/Output</a>
  */
-class TFile implements Closeable {
+public class TFile implements Closeable {
 
     private final RootRandomAccessFile out;
     private static final int fVersion = 52800;
@@ -25,35 +28,49 @@ class TFile implements Closeable {
     private int fCompress = 0;
     private Pointer fSeekInfo = new Pointer(0);
     private Pointer fNbytesInfo = new Pointer(0);
-    private final List<Record> dataRecords = new ArrayList<>();
+    private final List<TKey> dataRecords = new ArrayList<>();
     private final TDirectory topLevelDirectory;
     // This is the record that is always written at fBEGIN
-    private final Record topLevelRecord;
+    private final TKey topLevelRecord;
     // This is the record that is written at fSeekKeys
-    private final Record seekKeysRecord;
+    private final TKey seekKeysRecord;
 
-    TFile(String file) throws FileNotFoundException, IOException {
+    /**
+     * Open a new file for writing, or overwrite an existing file.
+     * @param file The file to create, or overwrite.
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
+    public TFile(String file) throws FileNotFoundException, IOException {
         this(new File(file));
     }
-
-    TFile(File file) throws FileNotFoundException, IOException {
+    /**
+     * Open a new file for writing, or overwrite an existing file.
+     * @param file
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
+    public TFile(File file) throws FileNotFoundException, IOException {
         out = new RootRandomAccessFile(file, this);
         TString tFile = new TString("TFile");
         TString fName = new TString(file.getName());
         TString fTitle = new TString("");
-        topLevelRecord = new Record(tFile, fName, fTitle, Pointer.ZERO);
-        seekKeysRecord = new Record(tFile, fName, fTitle, new Pointer(fBEGIN));
+        topLevelRecord = new TKey(tFile, fName, fTitle, Pointer.ZERO);
+        seekKeysRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
         topLevelDirectory = new TDirectory(Pointer.ZERO, new Pointer(fBEGIN), seekKeysRecord.getSeekKey());
         topLevelDirectory.fNbytesName = 32 + 2 * out.length(fName) + 2 * out.length(fTitle);
         topLevelRecord.add(new WeirdExtraNameAndTitle(fName, fTitle));
         topLevelRecord.add(topLevelDirectory);
         seekKeysRecord.add(topLevelDirectory.getKeyList());
     }
-
+    /**
+     * Flush any uncommitted data to disk.
+     * @throws IOException 
+     */
     public void flush() throws IOException {
         out.seek(fBEGIN);
         topLevelRecord.writeRecord(out);
-        for (Record record : dataRecords) {
+        for (TKey record : dataRecords) {
             record.writeRecord(out);
         }
         seekKeysRecord.writeRecord(out);
@@ -65,20 +82,45 @@ class TFile implements Closeable {
         // Finally write the header
         writeHeader();
     }
-
+    /**
+     * Close the file, first flushing any uncommitted data to disk.
+     * @throws IOException 
+     * @see <a href="http://google.com">http://google.com</a>
+     */
     @Override
     public void close() throws IOException {
         flush();
         out.close();
     }
-
-    void add(RootObject object, TString className, TString fName, TString fTitle) {
-        Record record = new Record(className, fName, fTitle, topLevelDirectory.fSeekDir);
+    /**
+     * Add an object to a root file. Note that this just registers the object with the
+     * file, the data is not extracted from the object and written to disk until flush() 
+     * or close() is called.
+     * @param object The object to be written to disk.
+     * @param className
+     * @param fName
+     * @param fTitle 
+     */
+    public void add(RootObject object) {
+        TString className = new TString(Utilities.getClassName(object.getClass()));
+        TString fName, fTitle;
+        if (object instanceof TNamed) {
+            TNamed tNamed = (TNamed) object;
+            fName = tNamed.getName();
+            fTitle = tNamed.getTitle();
+        } else {
+            fName = className;
+            fTitle = TString.empty();
+        }
+        TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir);
         record.add(object);
         dataRecords.add(record);
         topLevelDirectory.add(record);
     }
-
+    /**
+     * Write the file header at the top of a root file.
+     * @throws IOException 
+     */
     private void writeHeader() throws IOException {
         out.seek(0);
         out.writeByte('r');
@@ -100,11 +142,18 @@ class TFile implements Closeable {
         out.writeObject(topLevelDirectory.fUUID);
     }
 
+    /** 
+     * Returns true if the file represents pointers within the file as 64 bit
+     * values. 
+     * @return <code>true</code> if the file is >2GB.
+     */
     boolean isLargeFile() {
         return largeFile;
     }
-
-    private static class Record implements RootObject {
+    /**
+     * A class representing a record within the root file.
+     */
+    private static class TKey implements RootObject {
 
         private TString className;
         private TString fName;
@@ -118,15 +167,28 @@ class TFile implements Closeable {
         private TDatime fDatimeC;
         private int keyLen;
         private int size;
-
-        Record(TString className, TString fName, TString fTitle, Pointer seekPDir) {
+        
+        /**
+         * Create a new record.
+         * @param className The class name of objects to be stored in the file
+         * @param fName The name of the record
+         * @param fTitle The title of the record
+         * @param seekPDir A pointer to the parent directory
+         */
+        TKey(TString className, TString fName, TString fTitle, Pointer seekPDir) {
             this.className = className;
             this.fName = fName;
             this.fTitle = fTitle;
             this.seekPDir = seekPDir;
         }
-
-        public void writeRecord(RootRandomAccessFile out) throws IOException {
+        /**
+         * Write the record to the file. A side effect of calling this method is to 
+         * set various member variables representing the size and position of the record
+         * in the file.
+         * @param out
+         * @throws IOException 
+         */
+        void writeRecord(RootRandomAccessFile out) throws IOException {
             // Write all the objects associated with this record into a new DataBuffer
             RootBufferedOutputStream buffer = new RootBufferedOutputStream();
             for (RootObject object : objects) {
@@ -156,16 +218,30 @@ class TFile implements Closeable {
             out.writeShort(cycle);                // Cycle of key
             out.seek(endPos);
         }
-
+        /**
+         * The position of this record within the file. This method can be 
+         * called any time, but the return pointer will not be valid until 
+         * the record has been written using the writeRecord method.
+         * @return A pointer to the record location.
+         */
         Pointer getSeekKey() {
             return fSeekKey;
         }
 
+        /** Adds an object to the record. The contents of the object are not
+         * transfered until writeRecord is called.
+         * @param object The object to be stored in the record
+         */
         private void add(RootObject object) {
             objects.add(object);
         }
-
-        @Override
+        /**
+         * Used to write the short version of the record into the seekKeysRecord
+         * at the end of the file. 
+         * @param out
+         * @throws IOException 
+         */
+        @Override 
         public void write(RootOutput out) throws IOException {
             out.writeInt(size);
             out.writeShort(keyVersion);
@@ -185,7 +261,11 @@ class TFile implements Closeable {
             return 18 + out.length(fSeekKey) + out.length(seekPDir) + out.length(className) + out.length(fName) + out.length(fTitle);
         }
     }
-
+    /**
+     * A class which encapsulated a "pointer" within a root file.
+     * Depending on how big the file is, this may be written as either
+     * a 32bit or 64 bit integer.
+     */
     private static class Pointer implements RootObject {
 
         private long value;
@@ -228,7 +308,13 @@ class TFile implements Closeable {
             return out.isLargeFile() ? 8 : 4;
         }
     }
-
+    /**
+     * A root universal unique identifier written into the 
+     * TFile header, and each TDirectory within the file.
+     * This implementation uses the java built-in UUID support
+     * which may or may not be strictly compatible with Root's
+     * expected definition of the UUID. 
+     */
     private static class TUUID implements RootObject {
 
         private UUID uuid = UUID.randomUUID();
@@ -246,13 +332,14 @@ class TFile implements Closeable {
             return 10;
         }
     }
-
-    static class TString implements RootObject {
+    /** Represents a string in a root file.
+     */
+    public static class TString implements RootObject {
 
         private String string;
         private static final TString empty = new TString("");
 
-        TString(String string) {
+        public TString(String string) {
             this.string = string;
         }
 
@@ -279,7 +366,11 @@ class TFile implements Closeable {
             return l < 255 ? l + 1 : l + 5;
         }
     }
-
+    /** 
+     * Represents a directory within a root file. There is always a top-level
+     * directory associated with a Root file, and may or may not be subdirectories
+     * within the file.
+     */
     private static class TDirectory implements RootObject {
 
         private TDatime fDatimeC;
@@ -327,7 +418,7 @@ class TFile implements Closeable {
             return 40;
         }
 
-        private void add(Record record) {
+        private void add(TKey record) {
             tList.add(record);
         }
     }
@@ -353,14 +444,14 @@ class TFile implements Closeable {
             return l;
         }
 
-        private void add(Record record) {
+        private void add(TKey record) {
             list.add(record);
         }
     }
 
-    private static class TList implements RootObject {
+    public static class TList<A extends RootObject> implements RootObject {
 
-        private List<RootObject> list = new ArrayList<>();
+        private List<A> list = new ArrayList<>();
         private final static int version = 5;
         private TObject object = new TObject();
         private TString name = TString.empty();
@@ -385,7 +476,7 @@ class TFile implements Closeable {
             return l;
         }
 
-        private void add(Record record) {
+        private void add(A record) {
             list.add(record);
         }
     }
@@ -412,7 +503,7 @@ class TFile implements Closeable {
         }
     }
 
-    static class TObject implements RootObject {
+    public static class TObject implements RootObject {
 
         private final static int fUniqueID = 0;
         private int fBits = 0x03000000;
@@ -431,7 +522,7 @@ class TFile implements Closeable {
         }
     }
 
-    static class TNamed extends TObject {
+    public static class TNamed extends TObject {
 
         private TString name;
         private TString title;
@@ -463,6 +554,14 @@ class TFile implements Closeable {
         public void setTitle(TString title) {
             this.title = title;
         }     
+
+        private TString getName() {
+            return name;
+        }
+
+        private TString getTitle() {
+            return title;
+        }
     }
 
     static class TAttLine implements RootObject {

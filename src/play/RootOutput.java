@@ -8,7 +8,7 @@ import java.io.IOException;
  *
  * @author tonyj
  */
-interface RootOutput extends Closeable, DataOutput {
+public interface RootOutput extends Closeable, DataOutput {
 
     void writeObject(RootObject o) throws IOException;
     int length(RootObject o) throws IOException;

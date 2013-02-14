@@ -12,15 +12,14 @@ import play.TFile.TString;
 public class Main {
     public static void main(String[] args) throws IOException {
         try (TFile file = new TFile("play.root")) {
-            file.add(new TObjString("I am a root file written from Java!"),
-                    new TString("TObjString"),new TString("string"),TString.empty());
+            file.add(new TObjString("I am a root file written from Java!"));
             
             int nBins = 100;
             double[] data = new double[nBins+2];
             double xMin = -5;
             double xMax = 5;
             Random random = new Random();
-            final int entries = 1000;
+            final int entries = 10000;
             double sumx = 0;
             double sumx2 = 0;
             
@@ -39,7 +38,7 @@ public class Main {
             th1d.setSumw2(entries);
             th1d.setSumx(sumx);
             th1d.setSumx2(sumx2);
-            file.add(th1d,new TString("TH1D"),name,TString.empty());
+            file.add(th1d);
         }
     }
 }

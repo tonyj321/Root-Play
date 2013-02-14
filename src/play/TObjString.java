@@ -1,13 +1,18 @@
 package play;
 
 import java.io.IOException;
+import play.annotations.RootClass;
+import play.annotations.StreamerInfo;
 
 /**
  *
  * @author tonyj
+ * 
  */
+@RootClass( version = 1 )
 class TObjString extends TFile.TObject {
 
+    @StreamerInfo("wrapped TString")
     private TFile.TString string;
     private final static int version = 1;
 
