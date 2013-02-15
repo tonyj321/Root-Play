@@ -11,9 +11,6 @@ public class TStreamerBasicType extends TStreamerElement {
  
 
     TStreamerBasicType(Field f, StreamerInfo i, int type, int size, TString name) {
-        super(f,i);
-        setType(type);
-        setSize(size);
-        setTypeName(name);
+        super(f,i, type, size, name);
     }
 }

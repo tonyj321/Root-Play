@@ -6,7 +6,7 @@ import play.TFile.TString;
 
 @RootClass(version = 4)
 public class TStreamerElement extends TNamed {
-    
+
     @StreamerInfo("element type")
     private int fType;
     @StreamerInfo("sizeof element")
@@ -19,33 +19,23 @@ public class TStreamerElement extends TNamed {
     private int[] fMaxIndex = new int[5];
     @StreamerInfo("Data type name of data member")
     private TString fTypeName;
-    
 
-    TStreamerElement(Field f, StreamerInfo info) {
-        super(new TString(f.getName()),new TString(info.value()));
-    }
-    
-    
-    TStreamerElement(Class c, RootClass rootClass) {
-        super(new TString(TStreamerInfo.getClassName(rootClass, c)),new TString(rootClass.title()));
+    TStreamerElement(Field f, StreamerInfo info, int type, int size, TString typeName) {
+        super(new TString(f.getName()), new TString(info.value()));
+        this.fType = type;
+        this.fSize = size;
+        this.fTypeName = typeName;
     }
 
-    void setType(int fType) {
-        this.fType = fType;
-    }
-
-    void setSize(int fSize) {
-        this.fSize = fSize;
-    }
-
-    void setTypeName(TString fTypeName) {
-        this.fTypeName = fTypeName;
+    TStreamerElement(Class c, RootClass rootClass, int type, int size, TString typeName) {
+        super(new TString(TStreamerInfo.getClassName(rootClass, c)), new TString(rootClass.title()));
+        this.fType = type;
+        this.fSize = size;
+        this.fTypeName = typeName;
     }
 
     @Override
     public String toString() {
         return "TStreamerElement{" + "fType=" + fType + ", fSize=" + fSize + ", fArrayLength=" + fArrayLength + ", fArrayDim=" + fArrayDim + ", fMaxIndex=" + fMaxIndex + ", fTypeName=" + fTypeName + '}';
     }
-    
-    
 }
