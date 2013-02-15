@@ -803,33 +803,57 @@ public class TFile implements Closeable {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
     }
-
+    @RootClass(version=6)
     static class TH1 extends TNamed {
 
         private final static int version = 6;
+        @StreamerInfo(value="Line Attributes",type="BASE")
         private TAttLine tAttLine = new TAttLine();
+        @StreamerInfo(value="Fill area Attributes",type="BASE")
         private TAttFill tAttFill = new TAttFill();
+        @StreamerInfo(value="Marker Attributes",type="BASE")
         private TAttMarker tAttMarker = new TAttMarker();
-        private int fNcells;          //number of bins(1D), cells (2D) +U/Overflows
-        private TAxis fXaxis;           //X axis descriptor
-        private TAxis fYaxis;           //Y axis descriptor
-        private TAxis fZaxis;           //Z axis descriptor
-        private short fBarOffset = 0;       //(1000*offset) for bar charts or legos
-        private short fBarWidth = 1000;        //(1000*width) for bar charts or legos
-        private double fEntries = 0;         //Number of entries
-        private double fTsumw = 0;           //Total Sum of weights
-        private double fTsumw2 = 0;          //Total Sum of squares of weights
-        private double fTsumwx = 0;          //Total Sum of weight*X
-        private double fTsumwx2 = 0;         //Total Sum of weight*X*X
-        private double fMaximum = -1111;         //Maximum value for plotting
-        private double fMinimum = -1111;         //Minimum value for plotting
-        private double fNormFactor = 0;      //Normalization factor
-        private TArrayD fContour;        //Array to display contour levels
-        private TArrayD fSumw2;          //Array of sum of squares of weights
-        private TString fOption = TString.empty();         //histogram options
-        private TList fFunctions = new TList(); //->Pointer to list of functions (fits and user)
-        private int fBufferSize = 0;  //fBuffer size
+        @StreamerInfo("number of bins(1D), cells (2D) +U/Overflows")
+        private int fNcells;
+        @StreamerInfo("X axis descriptor")
+        private TAxis fXaxis;
+        @StreamerInfo("Y axis descriptor")
+        private TAxis fYaxis;
+        @StreamerInfo("Z axis descriptor")
+        private TAxis fZaxis;
+        @StreamerInfo("(1000*offset) for bar charts or legos")
+        private short fBarOffset = 0;
+        @StreamerInfo("(1000*width) for bar charts or legos")
+        private short fBarWidth = 1000;
+        @StreamerInfo("Number of entries")
+        private double fEntries = 0;
+        @StreamerInfo("Total Sum of weights")
+        private double fTsumw = 0;
+        @StreamerInfo("Total Sum of squares of weights")
+        private double fTsumw2 = 0;
+        @StreamerInfo("Total Sum of weight*X")
+        private double fTsumwx = 0;
+        @StreamerInfo("Total Sum of weight*X*X")
+        private double fTsumwx2 = 0;
+        @StreamerInfo("Maximum value for plotting")
+        private double fMaximum = -1111;
+        @StreamerInfo("Minimum value for plotting")
+        private double fMinimum = -1111;
+        @StreamerInfo("Normalization factor")
+        private double fNormFactor = 0;
+        @StreamerInfo("Array to display contour levels")
+        private TArrayD fContour;
+        @StreamerInfo("Array of sum of squares of weights")
+        private TArrayD fSumw2;
+        @StreamerInfo("histogram options")
+        private TString fOption = TString.empty();
+        @StreamerInfo(value="Pointer to list of functions (fits and user)",type="POINTER")
+        private TList fFunctions = new TList();
+        @StreamerInfo("fBuffer size")
+        private int fBufferSize = 0;
+        @StreamerInfo(value="entry buffer",size="fBufferSize")
         private int[] fBuffer = null;
+        @StreamerInfo("WTF?")
         private EBinErrorOpt fBinStatErrOpt = EBinErrorOpt.kNormal;
 
         private enum EBinErrorOpt {
@@ -910,9 +934,9 @@ public class TFile implements Closeable {
             this.fTsumwx2 = fTsumx2;
         }
     }
-
+    @RootClass(version=1)
     static class TH1D extends TH1 {
-
+        @StreamerInfo("Array of doubles")
         private TArrayD array;
         private static int version = 1;
 

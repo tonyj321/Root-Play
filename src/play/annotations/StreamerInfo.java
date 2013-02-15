@@ -14,4 +14,5 @@ import java.lang.annotation.Target;
 public @interface StreamerInfo {
     String value();
     public String type() default "";
+    public String size() default "";
 }
