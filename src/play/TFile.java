@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import play.annotations.RootClass;
+import play.annotations.StreamerInfo;
 import play.annotations.Utilities;
 
 /**
@@ -365,6 +367,11 @@ public class TFile implements Closeable {
             int l = string.getBytes().length;
             return l < 255 ? l + 1 : l + 5;
         }
+
+        @Override
+        public String toString() {
+            return "TString{" + "string=" + string + '}';
+        }
     }
     /** 
      * Represents a directory within a root file. There is always a top-level
@@ -476,9 +483,16 @@ public class TFile implements Closeable {
             return l;
         }
 
-        private void add(A record) {
+        public void add(A record) {
             list.add(record);
         }
+
+        @Override
+        public String toString() {
+            return "TList{" + "list=" + list + ", object=" + object + ", name=" + name + '}';
+        }
+        
+        
     }
 
     private static class WeirdExtraNameAndTitle implements RootObject {
@@ -503,8 +517,8 @@ public class TFile implements Closeable {
         }
     }
 
+    @RootClass (version = 1, title="Basic ROOT object")
     public static class TObject implements RootObject {
-
         private final static int fUniqueID = 0;
         private int fBits = 0x03000000;
         private final static int version = 1;
@@ -519,6 +533,11 @@ public class TFile implements Closeable {
         @Override
         public int length(RootOutput out) throws IOException {
             return 10;
+        }
+
+        @Override
+        public String toString() {
+            return "TObject{" + "fBits=" + fBits + '}';
         }
     }
 
@@ -564,11 +583,15 @@ public class TFile implements Closeable {
         }
     }
 
+    @RootClass(version=1)
     static class TAttLine implements RootObject {
 
-        private int fLineColor = 1;
-        private int fLineStyle = 1;
-        private int fLineWidth = 1;
+        @StreamerInfo("line color")
+        private short fLineColor = 1;
+        @StreamerInfo("line style")
+        private short fLineStyle = 1;
+        @StreamerInfo("line width")
+        private short fLineWidth = 1;
         private final static int version = 1;
 
         @Override
@@ -585,11 +608,12 @@ public class TFile implements Closeable {
             return 12;
         }
     }
-
+    @RootClass (version=1)
     static class TAttFill implements RootObject {
-
-        private int fFillColor = 0;
-        private int fFillStyle = 1001;
+        @StreamerInfo("fill area color")
+        private short fFillColor = 0;
+        @StreamerInfo("fill area style")
+        private short fFillStyle = 1001;
         private final static int version = 1;
 
         @Override
@@ -606,10 +630,13 @@ public class TFile implements Closeable {
         }
     }
 
+    @RootClass(version=2)
     static class TAttMarker implements RootObject {
-
-        private int fMarkerColor = 1;
-        private int fMarkerStyle = 1;
+        @StreamerInfo("Marker color index")
+        private short fMarkerColor = 1;
+        @StreamerInfo("Marker style")
+        private short fMarkerStyle = 1;
+        @StreamerInfo("Marker size")
         private float fMarkerSize = 1;
         private final static int version = 2;
 
@@ -627,20 +654,31 @@ public class TFile implements Closeable {
             return 14;
         }
     }
+    @RootClass(version=4)
+    public static class TAttAxis implements RootObject {
 
-    static class TAttAxis implements RootObject {
-
-        private int fNdivisions = 510;   //Number of divisions(10000*n3 + 100*n2 + n1)
-        private int fAxisColor = 1;    //color of the line axis
-        private int fLabelColor = 1;   //color of labels
-        private int fLabelFont = 62;    //font for labels
-        private float fLabelOffset = 0.005f;  //offset of labels
-        private float fLabelSize = 0.04f;    //size of labels
-        private float fTickLength = 0.03f;   //length of tick marks
-        private float fTitleOffset = 1.0f;  //offset of axis title
-        private float fTitleSize = 0.04f;    //size of axis title
-        private int fTitleColor = 1;   //color of axis title
-        private int fTitleFont = 62;    //font for axis title
+        @StreamerInfo("Number of divisions(10000*n3 + 100*n2 + n1)")
+        private int fNdivisions = 510;
+        @StreamerInfo("color of the line axis")
+        private short fAxisColor = 1;
+        @StreamerInfo("color of labels")
+        private short fLabelColor = 1;
+        @StreamerInfo("font for labels")
+        private short fLabelFont = 62;
+        @StreamerInfo("offset of labels")
+        private float fLabelOffset = 0.005f;
+        @StreamerInfo("size of labels")
+        private float fLabelSize = 0.04f;
+        @StreamerInfo("length of tick marks")
+        private float fTickLength = 0.03f;
+        @StreamerInfo("offset of axis title")
+        private float fTitleOffset = 1.0f;
+        @StreamerInfo("size of axis title")
+        private float fTitleSize = 0.04f;
+        @StreamerInfo("color of axis title")
+        private short fTitleColor = 1;
+        @StreamerInfo("font for axis title")
+        private short fTitleFont = 62;
         private final static int version = 4;
 
         @Override
@@ -666,24 +704,35 @@ public class TFile implements Closeable {
         }
     }
 
-    static class TAxis implements RootObject {
+    @RootClass(version=9)
+    public static class TAxis extends TNamed {
 
         private static final int version = 9;
-        private TNamed tNamed;
+        @StreamerInfo(value="Axis Attributes",type="BASE")
         private TAttAxis tAttAxis = new TAttAxis();
-        private int fNbins;             //Number of bins
-        private double fXmin;           //low edge of first bin
-        private double fXmax;           //upper edge of last bin
-        private TArrayD fXbins;         //Bin edges array in X
-        private int fFirst = 0;         //first bin to display
-        private int fLast = 0;          //last bin to display
-        private int fBits2 = 0;         //second bit status word
-        private int fTimeDisplay = 0;   //on/off displaying time values instead of numerics
-        private TString fTimeFormat;    //Date&time format, ex: 09/12/99 12:34:00
-        private THashList fLabels;      //List of labels
+        @StreamerInfo("Number of bins")
+        private int fNbins;
+        @StreamerInfo("low edge of first bin")
+        private double fXmin;
+        @StreamerInfo("upper edge of last bin")
+        private double fXmax;
+        @StreamerInfo("Bin edges array in X")
+        private TArrayD fXbins;
+        @StreamerInfo("first bin to display")
+        private int fFirst = 0;
+        @StreamerInfo("last bin to display")
+        private int fLast = 0;
+        @StreamerInfo(value="second bit status word",type="UShort_t")
+        private short fBits2 = 0;
+        @StreamerInfo("on/off displaying time values instead of numerics")
+        private boolean fTimeDisplay = false;
+        @StreamerInfo("Date&time format, ex: 09/12/99 12:34:00")
+        private TString fTimeFormat;
+        @StreamerInfo(value="List of labels",type="Pointer")
+        private THashList fLabels;
 
         TAxis(TString name, int nBins, double xMin, double xMax) {
-            this.tNamed = new TNamed(name, TString.empty());
+            super(name, TString.empty());
             this.fNbins = nBins;
             this.fXmin = xMin;
             this.fXmax = xMax;
@@ -693,7 +742,7 @@ public class TFile implements Closeable {
         public void write(RootOutput out) throws IOException {
             out.writeInt(0x40000000 | (length(out) - 4));
             out.writeShort(version);
-            out.writeObject(tNamed);
+            super.write(out);
             out.writeObject(tAttAxis);
             out.writeInt(fNbins);
             out.writeDouble(fXmin);
@@ -702,14 +751,14 @@ public class TFile implements Closeable {
             out.writeInt(fFirst);
             out.writeInt(fLast);
             out.writeShort(fBits2);
-            out.writeShort(fTimeDisplay); // TODO: Check this
+            out.writeShort(fTimeDisplay?1:0); // TODO: Check this
             out.writeObject(fTimeFormat);
             //out.writeObject(fLabels);
         }
 
         @Override
         public int length(RootOutput out) throws IOException {
-            return 38 + out.length(tNamed) + out.length(tAttAxis) + out.length(fXbins) + out.length(fTimeFormat) /*+ out.length(fLabels)*/;
+            return 38 + super.length(out) + out.length(tAttAxis) + out.length(fXbins) + out.length(fTimeFormat) /*+ out.length(fLabels)*/;
         }
     }
 

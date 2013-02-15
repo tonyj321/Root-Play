@@ -10,7 +10,7 @@ import play.annotations.StreamerInfo;
  * 
  */
 @RootClass( version = 1 )
-class TObjString extends TFile.TObject {
+public class TObjString extends TFile.TObject {
 
     @StreamerInfo("wrapped TString")
     private TFile.TString string;

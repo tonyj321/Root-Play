@@ -13,5 +13,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface RootClass {
     String className() default ""; 
+    String title() default ""; 
     int version();
 }

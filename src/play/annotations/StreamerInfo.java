@@ -13,4 +13,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface StreamerInfo {
     String value();
+    public String type() default "";
 }
