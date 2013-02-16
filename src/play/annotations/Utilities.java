@@ -37,7 +37,7 @@ public class Utilities {
     public static TStreamerInfo getStreamerInfo(Class c) throws StreamerInfoException {
         RootClass rootClass = (RootClass) c.getAnnotation(RootClass.class);
         if (rootClass == null) {
-            throw new StreamerInfoException("Cannot get streamer info for unannotated class");
+            throw new StreamerInfoException("Cannot get streamer info for unannotated class: "+c.getName());
         }
         TStreamerInfo info = new TStreamerInfo(c, rootClass);
 

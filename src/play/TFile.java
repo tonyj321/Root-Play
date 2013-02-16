@@ -9,13 +9,16 @@ import java.util.List;
 import java.util.UUID;
 import play.annotations.RootClass;
 import play.annotations.StreamerInfo;
+import play.annotations.StreamerInfoException;
 import play.annotations.Utilities;
 
 /**
- * Top level class for interacting with a Root file. Currently this implementation
- * only supports writing.
+ * Top level class for interacting with a Root file. Currently this
+ * implementation only supports writing.
+ *
  * @author tonyj
- * @see <a href="http://root.cern.ch/download/doc/11InputOutput.pdf">Root Manual Input/Output</a>
+ * @see <a href="http://root.cern.ch/download/doc/11InputOutput.pdf">Root Manual
+ * Input/Output</a>
  */
 public class TFile implements Closeable {
 
@@ -28,7 +31,7 @@ public class TFile implements Closeable {
     private int nfree = 0;
     private boolean largeFile = false;
     private int fCompress = 0;
-    private Pointer fSeekInfo = new Pointer(0);
+    private Pointer fSeekInfo;
     private Pointer fNbytesInfo = new Pointer(0);
     private final List<TKey> dataRecords = new ArrayList<>();
     private final TDirectory topLevelDirectory;
@@ -36,23 +39,29 @@ public class TFile implements Closeable {
     private final TKey topLevelRecord;
     // This is the record that is written at fSeekKeys
     private final TKey seekKeysRecord;
+    // This is the record that is written at fSeekInfo
+    private final TKey seekInfoRecord;
 
     /**
      * Open a new file for writing, or overwrite an existing file.
+     *
      * @param file The file to create, or overwrite.
      * @throws FileNotFoundException
-     * @throws IOException 
+     * @throws IOException
      */
     public TFile(String file) throws FileNotFoundException, IOException {
         this(new File(file));
     }
+
     /**
      * Open a new file for writing, or overwrite an existing file.
+     *
      * @param file
      * @throws FileNotFoundException
-     * @throws IOException 
+     * @throws IOException
      */
     public TFile(File file) throws FileNotFoundException, IOException {
+
         out = new RootRandomAccessFile(file, this);
         TString tFile = new TString("TFile");
         TString fName = new TString(file.getName());
@@ -64,10 +73,34 @@ public class TFile implements Closeable {
         topLevelRecord.add(new WeirdExtraNameAndTitle(fName, fTitle));
         topLevelRecord.add(topLevelDirectory);
         seekKeysRecord.add(topLevelDirectory.getKeyList());
+
+        //Temporarily hard-wire list of TStreamerInfos to be written into fSeekInfo record
+        try {
+            seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
+            fSeekInfo = seekInfoRecord.getSeekKey();
+            seekInfoRecord.add(Utilities.getStreamerInfo(TAttAxis.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TAttFill.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TAttLine.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TAttMarker.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TAxis.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TH1.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TH1D.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TList.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TSeqCollection.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TCollection.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TNamed.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TObject.class));
+            seekInfoRecord.add(Utilities.getStreamerInfo(TString.class));
+        } catch (StreamerInfoException ex) {
+            throw new IOException(ex);
+        }
+
     }
+
     /**
      * Flush any uncommitted data to disk.
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     public void flush() throws IOException {
         out.seek(fBEGIN);
@@ -75,6 +108,8 @@ public class TFile implements Closeable {
         for (TKey record : dataRecords) {
             record.writeRecord(out);
         }
+        seekInfoRecord.writeRecord(out);
+        fNbytesInfo.set(seekInfoRecord.size);
         seekKeysRecord.writeRecord(out);
         topLevelDirectory.fNbytesKeys = seekKeysRecord.size;
         fEND.set(out.getFilePointer());
@@ -84,9 +119,11 @@ public class TFile implements Closeable {
         // Finally write the header
         writeHeader();
     }
+
     /**
      * Close the file, first flushing any uncommitted data to disk.
-     * @throws IOException 
+     *
+     * @throws IOException
      * @see <a href="http://google.com">http://google.com</a>
      */
     @Override
@@ -94,14 +131,16 @@ public class TFile implements Closeable {
         flush();
         out.close();
     }
+
     /**
-     * Add an object to a root file. Note that this just registers the object with the
-     * file, the data is not extracted from the object and written to disk until flush() 
-     * or close() is called.
+     * Add an object to a root file. Note that this just registers the object
+     * with the file, the data is not extracted from the object and written to
+     * disk until flush() or close() is called.
+     *
      * @param object The object to be written to disk.
      * @param className
      * @param fName
-     * @param fTitle 
+     * @param fTitle
      */
     public void add(RootObject object) {
         TString className = new TString(Utilities.getClassName(object.getClass()));
@@ -119,9 +158,11 @@ public class TFile implements Closeable {
         dataRecords.add(record);
         topLevelDirectory.add(record);
     }
+
     /**
      * Write the file header at the top of a root file.
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     private void writeHeader() throws IOException {
         out.seek(0);
@@ -144,14 +185,16 @@ public class TFile implements Closeable {
         out.writeObject(topLevelDirectory.fUUID);
     }
 
-    /** 
+    /**
      * Returns true if the file represents pointers within the file as 64 bit
-     * values. 
+     * values.
+     *
      * @return <code>true</code> if the file is >2GB.
      */
     boolean isLargeFile() {
         return largeFile;
     }
+
     /**
      * A class representing a record within the root file.
      */
@@ -169,9 +212,10 @@ public class TFile implements Closeable {
         private TDatime fDatimeC;
         private int keyLen;
         private int size;
-        
+
         /**
          * Create a new record.
+         *
          * @param className The class name of objects to be stored in the file
          * @param fName The name of the record
          * @param fTitle The title of the record
@@ -183,12 +227,14 @@ public class TFile implements Closeable {
             this.fTitle = fTitle;
             this.seekPDir = seekPDir;
         }
+
         /**
-         * Write the record to the file. A side effect of calling this method is to 
-         * set various member variables representing the size and position of the record
-         * in the file.
+         * Write the record to the file. A side effect of calling this method is
+         * to set various member variables representing the size and position of
+         * the record in the file.
+         *
          * @param out
-         * @throws IOException 
+         * @throws IOException
          */
         void writeRecord(RootRandomAccessFile out) throws IOException {
             // Write all the objects associated with this record into a new DataBuffer
@@ -201,7 +247,7 @@ public class TFile implements Closeable {
             fDatimeC = new TDatime();
             long seekKey = out.getFilePointer();
             fSeekKey.set(seekKey);
-            out.seek(seekKey+18);
+            out.seek(seekKey + 18);
             out.writeObject(fSeekKey);            // Pointer to record itself (consistency check)
             out.writeObject(seekPDir);            // Pointer to directory header
             out.writeObject(className);
@@ -220,30 +266,36 @@ public class TFile implements Closeable {
             out.writeShort(cycle);                // Cycle of key
             out.seek(endPos);
         }
+
         /**
-         * The position of this record within the file. This method can be 
-         * called any time, but the return pointer will not be valid until 
-         * the record has been written using the writeRecord method.
+         * The position of this record within the file. This method can be
+         * called any time, but the return pointer will not be valid until the
+         * record has been written using the writeRecord method.
+         *
          * @return A pointer to the record location.
          */
         Pointer getSeekKey() {
             return fSeekKey;
         }
 
-        /** Adds an object to the record. The contents of the object are not
+        /**
+         * Adds an object to the record. The contents of the object are not
          * transfered until writeRecord is called.
+         *
          * @param object The object to be stored in the record
          */
         private void add(RootObject object) {
             objects.add(object);
         }
+
         /**
          * Used to write the short version of the record into the seekKeysRecord
-         * at the end of the file. 
+         * at the end of the file.
+         *
          * @param out
-         * @throws IOException 
+         * @throws IOException
          */
-        @Override 
+        @Override
         public void write(RootOutput out) throws IOException {
             out.writeInt(size);
             out.writeShort(keyVersion);
@@ -263,10 +315,11 @@ public class TFile implements Closeable {
             return 18 + out.length(fSeekKey) + out.length(seekPDir) + out.length(className) + out.length(fName) + out.length(fTitle);
         }
     }
+
     /**
-     * A class which encapsulated a "pointer" within a root file.
-     * Depending on how big the file is, this may be written as either
-     * a 32bit or 64 bit integer.
+     * A class which encapsulated a "pointer" within a root file. Depending on
+     * how big the file is, this may be written as either a 32bit or 64 bit
+     * integer.
      */
     private static class Pointer implements RootObject {
 
@@ -310,12 +363,12 @@ public class TFile implements Closeable {
             return out.isLargeFile() ? 8 : 4;
         }
     }
+
     /**
-     * A root universal unique identifier written into the 
-     * TFile header, and each TDirectory within the file.
-     * This implementation uses the java built-in UUID support
-     * which may or may not be strictly compatible with Root's
-     * expected definition of the UUID. 
+     * A root universal unique identifier written into the TFile header, and
+     * each TDirectory within the file. This implementation uses the java
+     * built-in UUID support which may or may not be strictly compatible with
+     * Root's expected definition of the UUID.
      */
     private static class TUUID implements RootObject {
 
@@ -334,8 +387,8 @@ public class TFile implements Closeable {
             return 10;
         }
     }
-    /** Represents a string in a root file.
-     */
+
+    @RootClass(version=0)
     public static class TString implements RootObject {
 
         private String string;
@@ -373,10 +426,11 @@ public class TFile implements Closeable {
             return "TString{" + "string=" + string + '}';
         }
     }
-    /** 
+
+    /**
      * Represents a directory within a root file. There is always a top-level
-     * directory associated with a Root file, and may or may not be subdirectories
-     * within the file.
+     * directory associated with a Root file, and may or may not be
+     * subdirectories within the file.
      */
     private static class TDirectory implements RootObject {
 
@@ -456,17 +510,29 @@ public class TFile implements Closeable {
         }
     }
 
-    public static class TList<A extends RootObject> implements RootObject {
+    @RootClass(version = 5)
+    public static class TList<A extends RootObject> extends TSeqCollection<A> implements RootObject {
 
-        private List<A> list = new ArrayList<>();
         private final static int version = 5;
-        private TObject object = new TObject();
+    }
+
+    @RootClass(version = 0)
+    private static class TSeqCollection<A extends RootObject> extends TCollection<A> {
+    }
+
+    @RootClass(version = 3)
+    private static class TCollection<A extends RootObject> extends TObject {
+
+        private final static int version = 3;
+        @StreamerInfo("name of the collection")
         private TString name = TString.empty();
+        @StreamerInfo("number of elements in the collection")
+        private List<A> list = new ArrayList<>();
 
         @Override
         public void write(RootOutput out) throws IOException {
             out.writeShort(version);
-            out.writeObject(object);
+            super.write(out);
             out.writeObject(name);
             out.writeInt(list.size());
             for (RootObject o : list) {
@@ -476,7 +542,7 @@ public class TFile implements Closeable {
 
         @Override
         public int length(RootOutput out) throws IOException {
-            int l = 6 + out.length(name) + out.length(object);
+            int l = 6 + out.length(name) + super.length(out);
             for (RootObject o : list) {
                 l += out.length(o);
             }
@@ -486,13 +552,6 @@ public class TFile implements Closeable {
         public void add(A record) {
             list.add(record);
         }
-
-        @Override
-        public String toString() {
-            return "TList{" + "list=" + list + ", object=" + object + ", name=" + name + '}';
-        }
-        
-        
     }
 
     private static class WeirdExtraNameAndTitle implements RootObject {
@@ -517,8 +576,9 @@ public class TFile implements Closeable {
         }
     }
 
-    @RootClass (version = 1, title="Basic ROOT object")
+    @RootClass(version = 1, title = "Basic ROOT object")
     public static class TObject implements RootObject {
+
         private final static int fUniqueID = 0;
         private int fBits = 0x03000000;
         private final static int version = 1;
@@ -541,6 +601,7 @@ public class TFile implements Closeable {
         }
     }
 
+    @RootClass(version=1)
     public static class TNamed extends TObject {
 
         private TString name;
@@ -572,7 +633,7 @@ public class TFile implements Closeable {
 
         public void setTitle(TString title) {
             this.title = title;
-        }     
+        }
 
         private TString getName() {
             return name;
@@ -583,7 +644,7 @@ public class TFile implements Closeable {
         }
     }
 
-    @RootClass(version=1)
+    @RootClass(version = 1)
     static class TAttLine implements RootObject {
 
         @StreamerInfo("line color")
@@ -608,8 +669,10 @@ public class TFile implements Closeable {
             return 12;
         }
     }
-    @RootClass (version=1)
+
+    @RootClass(version = 1)
     static class TAttFill implements RootObject {
+
         @StreamerInfo("fill area color")
         private short fFillColor = 0;
         @StreamerInfo("fill area style")
@@ -630,8 +693,9 @@ public class TFile implements Closeable {
         }
     }
 
-    @RootClass(version=2)
+    @RootClass(version = 2)
     static class TAttMarker implements RootObject {
+
         @StreamerInfo("Marker color index")
         private short fMarkerColor = 1;
         @StreamerInfo("Marker style")
@@ -654,7 +718,8 @@ public class TFile implements Closeable {
             return 14;
         }
     }
-    @RootClass(version=4)
+
+    @RootClass(version = 4)
     public static class TAttAxis implements RootObject {
 
         @StreamerInfo("Number of divisions(10000*n3 + 100*n2 + n1)")
@@ -704,11 +769,11 @@ public class TFile implements Closeable {
         }
     }
 
-    @RootClass(version=9)
+    @RootClass(version = 9)
     public static class TAxis extends TNamed {
 
         private static final int version = 9;
-        @StreamerInfo(value="Axis Attributes",type="BASE")
+        @StreamerInfo(value = "Axis Attributes", type = "BASE")
         private TAttAxis tAttAxis = new TAttAxis();
         @StreamerInfo("Number of bins")
         private int fNbins;
@@ -722,13 +787,13 @@ public class TFile implements Closeable {
         private int fFirst = 0;
         @StreamerInfo("last bin to display")
         private int fLast = 0;
-        @StreamerInfo(value="second bit status word",type="UShort_t")
+        @StreamerInfo(value = "second bit status word", type = "UShort_t")
         private short fBits2 = 0;
         @StreamerInfo("on/off displaying time values instead of numerics")
         private boolean fTimeDisplay = false;
         @StreamerInfo("Date&time format, ex: 09/12/99 12:34:00")
         private TString fTimeFormat;
-        @StreamerInfo(value="List of labels",type="Pointer")
+        @StreamerInfo(value = "List of labels", type = "Pointer")
         private THashList fLabels;
 
         TAxis(TString name, int nBins, double xMin, double xMax) {
@@ -751,7 +816,7 @@ public class TFile implements Closeable {
             out.writeInt(fFirst);
             out.writeInt(fLast);
             out.writeShort(fBits2);
-            out.writeShort(fTimeDisplay?1:0); // TODO: Check this
+            out.writeShort(fTimeDisplay ? 1 : 0); // TODO: Check this
             out.writeObject(fTimeFormat);
             //out.writeObject(fLabels);
         }
@@ -803,15 +868,16 @@ public class TFile implements Closeable {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
     }
-    @RootClass(version=6)
+
+    @RootClass(version = 6)
     static class TH1 extends TNamed {
 
         private final static int version = 6;
-        @StreamerInfo(value="Line Attributes",type="BASE")
+        @StreamerInfo(value = "Line Attributes", type = "BASE")
         private TAttLine tAttLine = new TAttLine();
-        @StreamerInfo(value="Fill area Attributes",type="BASE")
+        @StreamerInfo(value = "Fill area Attributes", type = "BASE")
         private TAttFill tAttFill = new TAttFill();
-        @StreamerInfo(value="Marker Attributes",type="BASE")
+        @StreamerInfo(value = "Marker Attributes", type = "BASE")
         private TAttMarker tAttMarker = new TAttMarker();
         @StreamerInfo("number of bins(1D), cells (2D) +U/Overflows")
         private int fNcells;
@@ -847,11 +913,11 @@ public class TFile implements Closeable {
         private TArrayD fSumw2;
         @StreamerInfo("histogram options")
         private TString fOption = TString.empty();
-        @StreamerInfo(value="Pointer to list of functions (fits and user)",type="POINTER")
+        @StreamerInfo(value = "Pointer to list of functions (fits and user)", type = "POINTER")
         private TList fFunctions = new TList();
         @StreamerInfo("fBuffer size")
         private int fBufferSize = 0;
-        @StreamerInfo(value="entry buffer",size="fBufferSize")
+        @StreamerInfo(value = "entry buffer", size = "fBufferSize")
         private int[] fBuffer = null;
         @StreamerInfo("WTF?")
         private EBinErrorOpt fBinStatErrOpt = EBinErrorOpt.kNormal;
@@ -926,6 +992,7 @@ public class TFile implements Closeable {
         public void setSumw2(double fTsumw2) {
             this.fTsumw2 = fTsumw2;
         }
+
         public void setSumx(double fTsumx) {
             this.fTsumwx = fTsumx;
         }
@@ -934,8 +1001,10 @@ public class TFile implements Closeable {
             this.fTsumwx2 = fTsumx2;
         }
     }
-    @RootClass(version=1)
+
+    @RootClass(version = 1)
     static class TH1D extends TH1 {
+
         @StreamerInfo("Array of doubles")
         private TArrayD array;
         private static int version = 1;
