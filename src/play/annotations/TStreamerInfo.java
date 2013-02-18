@@ -2,20 +2,20 @@ package play.annotations;
 
 import java.io.IOException;
 import play.RootOutput;
-import play.TFile.TList;
 import play.TFile.TNamed;
+import play.TFile.TObjArray;
 import play.TFile.TString;
 
 /**
  *
  * @author tonyj
  */
+@RootClass(version=9)
 public class TStreamerInfo extends TNamed {
 
-    private static int version = 9;
     private int fClassVersion;
     private int fCheckSum;
-    private TList<TStreamerElement> fElements = new TList<>();
+    private TObjArray<TStreamerElement> fElements = new TObjArray<>();
 
     TStreamerInfo(Class c, RootClass rootClass) {
         super(new TString(getClassName(rootClass, c)), new TString(rootClass.title()));
@@ -36,20 +36,9 @@ public class TStreamerInfo extends TNamed {
 
     @Override
     public void write(RootOutput out) throws IOException {
-        out.writeInt(0x40000000 | myLength(out));
-        out.writeShort(version);
         super.write(out);
-        out.writeInt(fClassVersion);
         out.writeInt(fCheckSum);
-    }
-
-    @Override
-    public int length(RootOutput out) throws IOException {
-        return 4 + myLength(out);
-    }
-
-    private int myLength(RootOutput out) throws IOException {
-        return 10+super.length(out);
+        out.writeInt(fClassVersion);
     }
 
     @Override

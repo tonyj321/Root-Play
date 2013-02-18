@@ -21,7 +21,6 @@ public class TStreamerElement extends TNamed {
     private int[] fMaxIndex = new int[5];
     @StreamerInfo("Data type name of data member")
     private TString fTypeName;
-    private static int version = 4;
 
     TStreamerElement(Field f, StreamerInfo info, int type, int size, TString typeName) {
         super(new TString(f.getName()), new TString(info.value()));
@@ -39,8 +38,6 @@ public class TStreamerElement extends TNamed {
 
     @Override
     public void write(RootOutput out) throws IOException {
-        out.writeInt(0x40000000 | myLength(out));
-        out.writeShort(version);
         super.write(out);
         out.writeInt(fType);
         out.writeInt(fSize);
@@ -50,15 +47,6 @@ public class TStreamerElement extends TNamed {
             out.writeInt(i);
         }
         out.writeObject(fTypeName);
-    }
-
-    @Override
-    public int length(RootOutput out) throws IOException {
-        return 4 + myLength(out);
-    }
-
-    private int myLength(RootOutput out) throws IOException {
-        return 9*4+2 + super.length(out) + out.length(fTypeName);
     }
 
     @Override

@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import play.annotations.RootClass;
 
 /**
  *
  * @author tonyj
  */
+@RootClass(version=0, hasStandardHeader=false)
 class TDatime implements RootObject {
     private int fDatime;
 
@@ -32,10 +34,5 @@ class TDatime implements RootObject {
     @Override
     public void write(RootOutput out) throws IOException {
         out.writeInt(fDatime);
-    }
-
-    @Override
-    public int length(RootOutput out) throws IOException {
-        return 4;
     }
 }

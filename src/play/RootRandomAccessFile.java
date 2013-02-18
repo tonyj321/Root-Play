@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -12,6 +14,7 @@ import java.io.RandomAccessFile;
 class RootRandomAccessFile extends RandomAccessFile implements RootOutput {
 
     private final TFile tFile;
+    private Map<String, Long> classMap = new HashMap<>();
 
     public RootRandomAccessFile(File file, TFile tFile) throws FileNotFoundException {
         super(file, "rw");
@@ -20,12 +23,7 @@ class RootRandomAccessFile extends RandomAccessFile implements RootOutput {
 
     @Override
     public void writeObject(RootObject o) throws IOException {
-        o.write(this);
-    }
-
-    @Override
-    public int length(RootObject o) throws IOException {
-        return o.length(this);
+        RootBufferedOutputStream.writeObject(this, o);
     }
 
     @Override
@@ -33,4 +31,13 @@ class RootRandomAccessFile extends RandomAccessFile implements RootOutput {
         return tFile.isLargeFile();
     }
 
+    @Override
+    public void writeObjectRef(RootObject o) throws IOException {
+        RootBufferedOutputStream.writeObjectRef(this, o);
+    }
+
+    @Override
+    public Map<String, Long> getClassMap() {
+        return classMap;
+    }
 }

@@ -15,4 +15,5 @@ public @interface RootClass {
     String className() default ""; 
     String title() default ""; 
     int version();
+    boolean hasStandardHeader() default true;
 }

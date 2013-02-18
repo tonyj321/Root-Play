@@ -25,19 +25,14 @@ public class Utilities {
         factories.put("BASE", new BaseFactory());
     }
 
-    public static String getClassName(Class c) {
-        String result = "";
-        RootClass rootClass = (RootClass) c.getAnnotation(RootClass.class);
-        if (rootClass != null) {
-            result = rootClass.className();
-        }
-        return result.length() == 0 ? c.getSimpleName() : result;
+    public static RootClassInfo getClassInfo(Class c) {
+        return new RootClassInfo(c);
     }
 
     public static TStreamerInfo getStreamerInfo(Class c) throws StreamerInfoException {
         RootClass rootClass = (RootClass) c.getAnnotation(RootClass.class);
         if (rootClass == null) {
-            throw new StreamerInfoException("Cannot get streamer info for unannotated class: "+c.getName());
+            throw new StreamerInfoException("Cannot get streamer info for unannotated class: " + c.getName());
         }
         TStreamerInfo info = new TStreamerInfo(c, rootClass);
 
@@ -55,6 +50,7 @@ public class Utilities {
             if (streamerInfo != null) {
                 String explicitType = streamerInfo.type();
                 Class fClass = f.getType();
+                rootClass = (RootClass) fClass.getAnnotation(RootClass.class);
                 Factory factory;
                 if (explicitType.length() == 0) {
                     factory = factories.get(fClass);
@@ -62,7 +58,7 @@ public class Utilities {
                     factory = factories.get(explicitType);
                 }
                 if (factory == null) {
-                    factory = new ElementFactory(62, 12, new TString(getClassName(fClass)));
+                    factory = new ElementFactory(62, 12, new TString(TStreamerInfo.getClassName(rootClass, c)));
                 }
                 info.add(factory.createStreamerElement(f, streamerInfo));
             }
@@ -70,10 +66,41 @@ public class Utilities {
         return info;
     }
 
+    public static class RootClassInfo {
+
+        private final Class javaClass;
+        private final RootClass rootClass;
+
+        RootClassInfo(Class c) throws StreamerInfoException {
+            this.javaClass = c;
+            this.rootClass = (RootClass) c.getAnnotation(RootClass.class);
+            if (rootClass == null) {
+                throw new StreamerInfoException("Cannot get class info for unannotated class: " + c.getName());
+            }
+        }
+
+        public String getName() {
+            return TStreamerInfo.getClassName(rootClass, javaClass);
+        }
+
+        public int getVersion() {
+            return rootClass.version();
+        }
+        
+        public boolean hasStandardHeader() {
+            return rootClass.hasStandardHeader();
+        }
+
+        public String getTitle() {
+            return rootClass.title();
+        }
+    }
+
     private interface Factory {
+
         TStreamerElement createStreamerElement(Field f, StreamerInfo i);
     }
-    
+
     private static class ElementFactory implements Factory {
 
         final int type;
@@ -107,7 +134,7 @@ public class Utilities {
         }
 
         PrimitiveFactory(int type, int size, TString name) {
-            super(type,size,name);
+            super(type, size, name);
         }
 
         @Override

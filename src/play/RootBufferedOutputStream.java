@@ -3,6 +3,10 @@ package play;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import play.annotations.Utilities;
+import play.annotations.Utilities.RootClassInfo;
 
 /**
  *
@@ -11,6 +15,7 @@ import java.io.IOException;
 class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
 
     private final RootByteArrayOutputStream buffer;
+    private Map<String, Long> classMap = new HashMap<>();
 
     RootBufferedOutputStream() {
         this(new RootByteArrayOutputStream());
@@ -23,16 +28,12 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
 
     @Override
     public void writeObject(RootObject o) throws IOException {
-        if (o == null) {
-            writeInt(0);
-        } else {
-            o.write(this);
-        }
+        writeObject(this, o);
     }
 
     @Override
-    public int length(RootObject o) throws IOException {
-        return o == null ? 4 : o.length(this);
+    public void writeObjectRef(RootObject o) throws IOException {
+        writeObjectRef(this, o);
     }
 
     @Override
@@ -42,14 +43,78 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
 
     void writeTo(RootOutput out) throws IOException {
         buffer.writeTo(out);
+    }
 
+    @Override
+    public void seek(long position) {
+        buffer.seek(position);
+    }
 
+    @Override
+    public long getFilePointer() {
+        return buffer.getFilePointer();
+    }
+
+    @Override
+    public Map<String, Long> getClassMap() {
+        return classMap;
+    }
+
+    static void writeObject(RootOutput out, RootObject o) throws IOException {
+        if (o == null) {
+            out.writeInt(0);
+        } else {
+            RootClassInfo classInfo = Utilities.getClassInfo(o.getClass());
+            if (classInfo.hasStandardHeader()) {
+                long objectPointer = out.getFilePointer();
+                out.writeInt(0); // space for length
+                out.writeShort(classInfo.getVersion());
+                o.write(out);
+                long end = out.getFilePointer();
+                out.seek(objectPointer);
+                out.writeInt(0x40000000 | (int) (end - objectPointer));
+                out.seek(end);
+            } else {
+                o.write(out);
+            }
+        }
+    }
+
+    static void writeObjectRef(RootOutput out, RootObject o) throws IOException {
+        long objectPointer = out.getFilePointer();
+        out.writeInt(0); // Space for length
+        RootClassInfo classInfo = Utilities.getClassInfo(o.getClass());
+        String className = classInfo.getName();
+        Long address = out.getClassMap().get(className);
+        if (address == null) {
+            address = out.getFilePointer();
+            out.writeInt(-1);
+            out.write(className.getBytes());
+            out.writeByte(0); // Null terminated
+            out.getClassMap().put(className, address);
+        } else {
+            out.writeInt(0x8000000 | address.intValue());
+        }
+        out.writeShort(classInfo.getVersion());
+        o.write(out);
+        long end = out.getFilePointer();
+        out.seek(objectPointer);
+        out.writeInt(0x40000000 | (int) (end - objectPointer));
+        out.seek(end);
     }
 
     private static class RootByteArrayOutputStream extends ByteArrayOutputStream {
 
         private void writeTo(RootOutput out) throws IOException {
             out.write(buf, 0, count);
+        }
+
+        private long getFilePointer() {
+            return count;
+        }
+
+        private void seek(long position) {
+            count = (int) position;
         }
     }
 }

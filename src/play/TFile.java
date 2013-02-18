@@ -10,6 +10,7 @@ import java.util.UUID;
 import play.annotations.RootClass;
 import play.annotations.StreamerInfo;
 import play.annotations.StreamerInfoException;
+import play.annotations.TStreamerInfo;
 import play.annotations.Utilities;
 
 /**
@@ -69,28 +70,33 @@ public class TFile implements Closeable {
         topLevelRecord = new TKey(tFile, fName, fTitle, Pointer.ZERO);
         seekKeysRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
         topLevelDirectory = new TDirectory(Pointer.ZERO, new Pointer(fBEGIN), seekKeysRecord.getSeekKey());
-        topLevelDirectory.fNbytesName = 32 + 2 * out.length(fName) + 2 * out.length(fTitle);
+        topLevelDirectory.fNbytesName = 32 + 2 * fName.length() + 2 * fTitle.length();
         topLevelRecord.add(new WeirdExtraNameAndTitle(fName, fTitle));
         topLevelRecord.add(topLevelDirectory);
         seekKeysRecord.add(topLevelDirectory.getKeyList());
 
         //Temporarily hard-wire list of TStreamerInfos to be written into fSeekInfo record
         try {
+            tFile = new TString("TList");
+            fName = new TString("StreamerInfo");
+            fTitle = new TString("Doubly linked list");
             seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
             fSeekInfo = seekInfoRecord.getSeekKey();
-            seekInfoRecord.add(Utilities.getStreamerInfo(TAttAxis.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TAttFill.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TAttLine.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TAttMarker.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TAxis.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TH1.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TH1D.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TList.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TSeqCollection.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TCollection.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TNamed.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TObject.class));
-            seekInfoRecord.add(Utilities.getStreamerInfo(TString.class));
+            TList<TStreamerInfo> list = new TList<>();
+            seekInfoRecord.add(list);
+            list.add(Utilities.getStreamerInfo(TAttAxis.class));
+            list.add(Utilities.getStreamerInfo(TAttFill.class));
+            list.add(Utilities.getStreamerInfo(TAttLine.class));
+            list.add(Utilities.getStreamerInfo(TAttMarker.class));
+            list.add(Utilities.getStreamerInfo(TAxis.class));
+            list.add(Utilities.getStreamerInfo(TH1.class));
+            list.add(Utilities.getStreamerInfo(TH1D.class));
+            list.add(Utilities.getStreamerInfo(TList.class));
+            list.add(Utilities.getStreamerInfo(TSeqCollection.class));
+            list.add(Utilities.getStreamerInfo(TCollection.class));
+            list.add(Utilities.getStreamerInfo(TNamed.class));
+            list.add(Utilities.getStreamerInfo(TObject.class));
+            list.add(Utilities.getStreamerInfo(TString.class));
         } catch (StreamerInfoException ex) {
             throw new IOException(ex);
         }
@@ -143,7 +149,7 @@ public class TFile implements Closeable {
      * @param fTitle
      */
     public void add(RootObject object) {
-        TString className = new TString(Utilities.getClassName(object.getClass()));
+        TString className = new TString(Utilities.getClassInfo(object.getClass()).getName());
         TString fName, fTitle;
         if (object instanceof TNamed) {
             TNamed tNamed = (TNamed) object;
@@ -309,11 +315,6 @@ public class TFile implements Closeable {
             out.writeObject(fName);
             out.writeObject(fTitle);
         }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 18 + out.length(fSeekKey) + out.length(seekPDir) + out.length(className) + out.length(fName) + out.length(fTitle);
-        }
     }
 
     /**
@@ -321,6 +322,7 @@ public class TFile implements Closeable {
      * how big the file is, this may be written as either a 32bit or 64 bit
      * integer.
      */
+    @RootClass(version=0, hasStandardHeader=false)
     private static class Pointer implements RootObject {
 
         private long value;
@@ -357,11 +359,6 @@ public class TFile implements Closeable {
             }
 
         }
-
-        @Override
-        public int length(RootOutput out) {
-            return out.isLargeFile() ? 8 : 4;
-        }
     }
 
     /**
@@ -370,6 +367,7 @@ public class TFile implements Closeable {
      * built-in UUID support which may or may not be strictly compatible with
      * Root's expected definition of the UUID.
      */
+    @RootClass(version=1, hasStandardHeader=false)
     private static class TUUID implements RootObject {
 
         private UUID uuid = UUID.randomUUID();
@@ -381,14 +379,9 @@ public class TFile implements Closeable {
             out.writeLong(uuid.getMostSignificantBits());
             out.writeLong(uuid.getLeastSignificantBits());
         }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 10;
-        }
     }
 
-    @RootClass(version=0)
+    @RootClass(version=0, hasStandardHeader=false)
     public static class TString implements RootObject {
 
         private String string;
@@ -415,15 +408,9 @@ public class TFile implements Closeable {
             out.write(chars);
         }
 
-        @Override
-        public int length(RootOutput out) {
+        int length() {
             int l = string.getBytes().length;
             return l < 255 ? l + 1 : l + 5;
-        }
-
-        @Override
-        public String toString() {
-            return "TString{" + "string=" + string + '}';
         }
     }
 
@@ -474,11 +461,6 @@ public class TFile implements Closeable {
             return tList;
         }
 
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 40;
-        }
-
         private void add(TKey record) {
             tList.add(record);
         }
@@ -496,24 +478,32 @@ public class TFile implements Closeable {
             }
         }
 
-        @Override
-        public int length(RootOutput out) throws IOException {
-            int l = 4;
-            for (RootObject o : list) {
-                l += out.length(o);
-            }
-            return l;
-        }
-
         private void add(TKey record) {
             list.add(record);
         }
     }
 
+    @RootClass(version = 3)
+    public static class TObjArray<A extends RootObject> extends TSeqCollection<A> implements RootObject {
+
+        private int fLowerBound = 0;
+        private int fLast = 0;
+        
+        @Override
+        public void write(RootOutput out) throws IOException {
+            super.write(out);
+            out.writeInt(fLowerBound);
+            out.writeInt(fLast);
+        }
+    }
+    
     @RootClass(version = 5)
     public static class TList<A extends RootObject> extends TSeqCollection<A> implements RootObject {
 
-        private final static int version = 5;
+        @Override
+        public void write(RootOutput out) throws IOException {
+            super.write(out);
+        }
     }
 
     @RootClass(version = 0)
@@ -523,7 +513,6 @@ public class TFile implements Closeable {
     @RootClass(version = 3)
     private static class TCollection<A extends RootObject> extends TObject {
 
-        private final static int version = 3;
         @StreamerInfo("name of the collection")
         private TString name = TString.empty();
         @StreamerInfo("number of elements in the collection")
@@ -531,22 +520,12 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeShort(version);
             super.write(out);
             out.writeObject(name);
             out.writeInt(list.size());
             for (RootObject o : list) {
-                out.writeObject(o);
+                out.writeObjectRef(o);
             }
-        }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            int l = 6 + out.length(name) + super.length(out);
-            for (RootObject o : list) {
-                l += out.length(o);
-            }
-            return l;
         }
 
         public void add(A record) {
@@ -569,14 +548,9 @@ public class TFile implements Closeable {
             out.writeObject(fName);
             out.writeObject(fTitle);
         }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return out.length(fName) + out.length(fTitle);
-        }
     }
 
-    @RootClass(version = 1, title = "Basic ROOT object")
+    @RootClass(version = 1, title = "Basic ROOT object", hasStandardHeader=false)
     public static class TObject implements RootObject {
 
         private final static int fUniqueID = 0;
@@ -591,11 +565,6 @@ public class TFile implements Closeable {
         }
 
         @Override
-        public int length(RootOutput out) throws IOException {
-            return 10;
-        }
-
-        @Override
         public String toString() {
             return "TObject{" + "fBits=" + fBits + '}';
         }
@@ -606,7 +575,6 @@ public class TFile implements Closeable {
 
         private TString name;
         private TString title;
-        private final static int version = 1;
 
         public TNamed(TString name, TString title) {
             this.name = name;
@@ -615,20 +583,9 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | myLength(out));
-            out.writeShort(version);
             super.write(out);
             out.writeObject(name);
             out.writeObject(title);
-        }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 4 + myLength(out);
-        }
-
-        private int myLength(RootOutput out) throws IOException {
-            return 2 + super.length(out) + out.length(name) + out.length(title);
         }
 
         public void setTitle(TString title) {
@@ -657,16 +614,9 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | (length(out) - 4));
-            out.writeShort(version);
             out.writeShort(fLineColor);
             out.writeShort(fLineStyle);
             out.writeShort(fLineWidth);
-        }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 12;
         }
     }
 
@@ -677,19 +627,11 @@ public class TFile implements Closeable {
         private short fFillColor = 0;
         @StreamerInfo("fill area style")
         private short fFillStyle = 1001;
-        private final static int version = 1;
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | (length(out) - 4));
-            out.writeShort(version);
             out.writeShort(fFillColor);
             out.writeShort(fFillStyle);
-        }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 10;
         }
     }
 
@@ -702,20 +644,12 @@ public class TFile implements Closeable {
         private short fMarkerStyle = 1;
         @StreamerInfo("Marker size")
         private float fMarkerSize = 1;
-        private final static int version = 2;
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | (length(out) - 4));
-            out.writeShort(version);
             out.writeShort(fMarkerColor);
             out.writeShort(fMarkerStyle);
             out.writeFloat(fMarkerSize);
-        }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 14;
         }
     }
 
@@ -748,8 +682,6 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | (length(out) - 4));
-            out.writeShort(version);
             out.writeInt(fNdivisions);
             out.writeShort(fAxisColor);
             out.writeShort(fLabelColor);
@@ -762,17 +694,11 @@ public class TFile implements Closeable {
             out.writeShort(fTitleColor);
             out.writeShort(fTitleFont);
         }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 40;
-        }
     }
 
     @RootClass(version = 9)
     public static class TAxis extends TNamed {
 
-        private static final int version = 9;
         @StreamerInfo(value = "Axis Attributes", type = "BASE")
         private TAttAxis tAttAxis = new TAttAxis();
         @StreamerInfo("Number of bins")
@@ -805,8 +731,6 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | (length(out) - 4));
-            out.writeShort(version);
             super.write(out);
             out.writeObject(tAttAxis);
             out.writeInt(fNbins);
@@ -820,13 +744,9 @@ public class TFile implements Closeable {
             out.writeObject(fTimeFormat);
             //out.writeObject(fLabels);
         }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 38 + super.length(out) + out.length(tAttAxis) + out.length(fXbins) + out.length(fTimeFormat) /*+ out.length(fLabels)*/;
-        }
     }
 
+    @RootClass(version=0, hasStandardHeader=false)
     static class TArrayD implements RootObject {
 
         private double[] fArray;
@@ -842,13 +762,8 @@ public class TFile implements Closeable {
                 out.writeDouble(d);
             }
         }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 4 + 8 * fArray.length;
-        }
     }
-
+    @RootClass(version=0)
     static class THashList extends TUnimplemented {
     }
 
@@ -862,17 +777,11 @@ public class TFile implements Closeable {
         public void write(RootOutput out) throws IOException {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
     }
 
     @RootClass(version = 6)
     static class TH1 extends TNamed {
 
-        private final static int version = 6;
         @StreamerInfo(value = "Line Attributes", type = "BASE")
         private TAttLine tAttLine = new TAttLine();
         @StreamerInfo(value = "Fill area Attributes", type = "BASE")
@@ -939,8 +848,6 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | myLength(out));
-            out.writeShort(version);
             super.write(out);
             out.writeObject(tAttLine);
             out.writeObject(tAttFill);
@@ -970,17 +877,6 @@ public class TFile implements Closeable {
             out.writeByte(fBinStatErrOpt.ordinal());
         }
 
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 4 + myLength(out);
-        }
-
-        private int myLength(RootOutput out) throws IOException {
-            return 7 + 8 + 64 + super.length(out) + out.length(tAttLine) + out.length(tAttFill) + out.length(tAttMarker)
-                    + out.length(fXaxis) + out.length(fYaxis) + out.length(fZaxis) + out.length(fContour)
-                    + out.length(fSumw2) + out.length(fOption) + out.length(fFunctions) + 4 * fBufferSize;
-        }
-
         public void setEntries(double fEntries) {
             this.fEntries = fEntries;
         }
@@ -1007,7 +903,6 @@ public class TFile implements Closeable {
 
         @StreamerInfo("Array of doubles")
         private TArrayD array;
-        private static int version = 1;
 
         TH1D(TString name, int nBins, double xMin, double xMax, double[] data) {
             super(name, nBins, xMin, xMax);
@@ -1016,19 +911,8 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
-            out.writeInt(0x40000000 | myLength(out));
-            out.writeShort(version);
             super.write(out);
             out.writeObject(array);
-        }
-
-        @Override
-        public int length(RootOutput out) throws IOException {
-            return 4 + myLength(out);
-        }
-
-        private int myLength(RootOutput out) throws IOException {
-            return 2 + super.length(out) + out.length(array);
         }
     }
 }
