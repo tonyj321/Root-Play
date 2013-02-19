@@ -14,6 +14,10 @@ import play.annotations.Utilities.RootClassInfo;
  */
 class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
 
+    private static final int kByteCountMask = 0x40000000;
+    private static final int kNewClassTag = 0xFFFFFFFF;
+    private static final int kClassMask = 0x80000000;
+    private static final int kMapOffset = 2;
     private final RootByteArrayOutputStream buffer;
     private Map<String, Long> classMap = new HashMap<>();
 
@@ -59,6 +63,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
     public Map<String, Long> getClassMap() {
         return classMap;
     }
+    
 
     static void writeObject(RootOutput out, RootObject o) throws IOException {
         if (o == null) {
@@ -72,7 +77,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
                 o.write(out);
                 long end = out.getFilePointer();
                 out.seek(objectPointer);
-                out.writeInt(0x40000000 | (int) (end - objectPointer));
+                out.writeInt(kByteCountMask | (int) (end - objectPointer - 4));
                 out.seek(end);
             } else {
                 o.write(out);
@@ -88,18 +93,18 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
         Long address = out.getClassMap().get(className);
         if (address == null) {
             address = out.getFilePointer();
-            out.writeInt(-1);
+            out.writeInt(kNewClassTag);
             out.write(className.getBytes());
             out.writeByte(0); // Null terminated
             out.getClassMap().put(className, address);
         } else {
-            out.writeInt(0x8000000 | address.intValue());
+            out.writeInt(kClassMask | (address.intValue() + kMapOffset));
         }
         out.writeShort(classInfo.getVersion());
         o.write(out);
         long end = out.getFilePointer();
         out.seek(objectPointer);
-        out.writeInt(0x40000000 | (int) (end - objectPointer));
+        out.writeInt(0x40000000 | (int) (end - objectPointer - 4));
         out.seek(end);
     }
 

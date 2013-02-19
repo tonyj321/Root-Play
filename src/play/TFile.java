@@ -41,7 +41,7 @@ public class TFile implements Closeable {
     // This is the record that is written at fSeekKeys
     private final TKey seekKeysRecord;
     // This is the record that is written at fSeekInfo
-    private final TKey seekInfoRecord;
+//    private final TKey seekInfoRecord;
 
     /**
      * Open a new file for writing, or overwrite an existing file.
@@ -75,31 +75,32 @@ public class TFile implements Closeable {
         topLevelRecord.add(topLevelDirectory);
         seekKeysRecord.add(topLevelDirectory.getKeyList());
 
+        fSeekInfo = new Pointer(0);
         //Temporarily hard-wire list of TStreamerInfos to be written into fSeekInfo record
-        try {
-            tFile = new TString("TList");
-            fName = new TString("StreamerInfo");
-            fTitle = new TString("Doubly linked list");
-            seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
-            fSeekInfo = seekInfoRecord.getSeekKey();
-            TList<TStreamerInfo> list = new TList<>();
-            seekInfoRecord.add(list);
-            list.add(Utilities.getStreamerInfo(TAttAxis.class));
-            list.add(Utilities.getStreamerInfo(TAttFill.class));
-            list.add(Utilities.getStreamerInfo(TAttLine.class));
-            list.add(Utilities.getStreamerInfo(TAttMarker.class));
-            list.add(Utilities.getStreamerInfo(TAxis.class));
-            list.add(Utilities.getStreamerInfo(TH1.class));
-            list.add(Utilities.getStreamerInfo(TH1D.class));
-            list.add(Utilities.getStreamerInfo(TList.class));
-            list.add(Utilities.getStreamerInfo(TSeqCollection.class));
-            list.add(Utilities.getStreamerInfo(TCollection.class));
-            list.add(Utilities.getStreamerInfo(TNamed.class));
-            list.add(Utilities.getStreamerInfo(TObject.class));
-            list.add(Utilities.getStreamerInfo(TString.class));
-        } catch (StreamerInfoException ex) {
-            throw new IOException(ex);
-        }
+//        try {
+//            tFile = new TString("TList");
+//            fName = new TString("StreamerInfo");
+//            fTitle = new TString("Doubly linked list");
+//            seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
+//            fSeekInfo = seekInfoRecord.getSeekKey();
+//            TList<TStreamerInfo> list = new TList<>();
+//            seekInfoRecord.add(list);
+//            list.add(Utilities.getStreamerInfo(TAttAxis.class));
+////            list.add(Utilities.getStreamerInfo(TAttFill.class));
+//            list.add(Utilities.getStreamerInfo(TAttLine.class));
+//            list.add(Utilities.getStreamerInfo(TAttMarker.class));
+//            list.add(Utilities.getStreamerInfo(TAxis.class));
+//            list.add(Utilities.getStreamerInfo(TH1.class));
+//            list.add(Utilities.getStreamerInfo(TH1D.class));
+//            list.add(Utilities.getStreamerInfo(TList.class));
+//            list.add(Utilities.getStreamerInfo(TSeqCollection.class));
+//            list.add(Utilities.getStreamerInfo(TCollection.class));
+//            list.add(Utilities.getStreamerInfo(TNamed.class));
+//            list.add(Utilities.getStreamerInfo(TObject.class));
+//            list.add(Utilities.getStreamerInfo(TString.class));
+//        } catch (StreamerInfoException ex) {
+//            throw new IOException(ex);
+//        }
 
     }
 
@@ -114,8 +115,8 @@ public class TFile implements Closeable {
         for (TKey record : dataRecords) {
             record.writeRecord(out);
         }
-        seekInfoRecord.writeRecord(out);
-        fNbytesInfo.set(seekInfoRecord.size);
+//        seekInfoRecord.writeRecord(out);
+//        fNbytesInfo.set(seekInfoRecord.size);
         seekKeysRecord.writeRecord(out);
         topLevelDirectory.fNbytesKeys = seekKeysRecord.size;
         fEND.set(out.getFilePointer());
@@ -156,7 +157,7 @@ public class TFile implements Closeable {
             fName = tNamed.getName();
             fTitle = tNamed.getTitle();
         } else {
-            fName = className;
+            fName = new TString("string");
             fTitle = TString.empty();
         }
         TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir);
@@ -204,6 +205,7 @@ public class TFile implements Closeable {
     /**
      * A class representing a record within the root file.
      */
+    @RootClass(version=0, hasStandardHeader=false)
     private static class TKey implements RootObject {
 
         private TString className;
@@ -249,7 +251,6 @@ public class TFile implements Closeable {
                 buffer.writeObject(object);
             }
             buffer.close();
-            objLen = buffer.size();
             fDatimeC = new TDatime();
             long seekKey = out.getFilePointer();
             fSeekKey.set(seekKey);
@@ -259,10 +260,12 @@ public class TFile implements Closeable {
             out.writeObject(className);
             out.writeObject(fName);
             out.writeObject(fTitle);
+            long dataPos = out.getFilePointer();
             buffer.writeTo(out);
             long endPos = out.getFilePointer();
+            objLen = (int) (endPos - dataPos);
             size = (int) (endPos - seekKey);
-            keyLen = size - objLen;
+            keyLen = (int) (dataPos - seekKey);
             out.seek(seekKey);
             out.writeInt(size);                      // Length of compressed object
             out.writeShort(keyVersion);           // TKey version identifier
@@ -419,6 +422,7 @@ public class TFile implements Closeable {
      * directory associated with a Root file, and may or may not be
      * subdirectories within the file.
      */
+    @RootClass(version=5,hasStandardHeader=false)
     private static class TDirectory implements RootObject {
 
         private TDatime fDatimeC;
@@ -465,7 +469,7 @@ public class TFile implements Closeable {
             tList.add(record);
         }
     }
-
+    @RootClass(version=0, hasStandardHeader=false)
     private static class TKeyList implements RootObject {
 
         private List<RootObject> list = new ArrayList<>();
@@ -532,7 +536,7 @@ public class TFile implements Closeable {
             list.add(record);
         }
     }
-
+    @RootClass(version=0,hasStandardHeader=false)
     private static class WeirdExtraNameAndTitle implements RootObject {
 
         private final TString fName;
@@ -911,6 +915,7 @@ public class TFile implements Closeable {
 
         @Override
         public void write(RootOutput out) throws IOException {
+            //FIXME: This does not work, because no longer writes the header!
             super.write(out);
             out.writeObject(array);
         }
