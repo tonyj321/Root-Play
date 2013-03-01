@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import play.annotations.RootClass;
@@ -41,7 +42,7 @@ public class TFile implements Closeable {
     // This is the record that is written at fSeekKeys
     private final TKey seekKeysRecord;
     // This is the record that is written at fSeekInfo
-//    private final TKey seekInfoRecord;
+    private final TKey seekInfoRecord;
 
     /**
      * Open a new file for writing, or overwrite an existing file.
@@ -75,32 +76,33 @@ public class TFile implements Closeable {
         topLevelRecord.add(topLevelDirectory);
         seekKeysRecord.add(topLevelDirectory.getKeyList());
 
-        fSeekInfo = new Pointer(0);
         //Temporarily hard-wire list of TStreamerInfos to be written into fSeekInfo record
-//        try {
-//            tFile = new TString("TList");
-//            fName = new TString("StreamerInfo");
-//            fTitle = new TString("Doubly linked list");
-//            seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
-//            fSeekInfo = seekInfoRecord.getSeekKey();
-//            TList<TStreamerInfo> list = new TList<>();
-//            seekInfoRecord.add(list);
-//            list.add(Utilities.getStreamerInfo(TAttAxis.class));
-////            list.add(Utilities.getStreamerInfo(TAttFill.class));
-//            list.add(Utilities.getStreamerInfo(TAttLine.class));
-//            list.add(Utilities.getStreamerInfo(TAttMarker.class));
-//            list.add(Utilities.getStreamerInfo(TAxis.class));
-//            list.add(Utilities.getStreamerInfo(TH1.class));
-//            list.add(Utilities.getStreamerInfo(TH1D.class));
-//            list.add(Utilities.getStreamerInfo(TList.class));
-//            list.add(Utilities.getStreamerInfo(TSeqCollection.class));
-//            list.add(Utilities.getStreamerInfo(TCollection.class));
-//            list.add(Utilities.getStreamerInfo(TNamed.class));
-//            list.add(Utilities.getStreamerInfo(TObject.class));
-//            list.add(Utilities.getStreamerInfo(TString.class));
-//        } catch (StreamerInfoException ex) {
-//            throw new IOException(ex);
-//        }
+        try {
+            tFile = new TString("TList");
+            fName = new TString("StreamerInfo");
+            fTitle = new TString("Doubly linked list");
+            seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
+            fSeekInfo = seekInfoRecord.getSeekKey();
+            TList<TStreamerInfo> list = new TList<>();
+            seekInfoRecord.add(list);
+            list.add(Utilities.getStreamerInfo(TAttAxis.class));
+            list.add(Utilities.getStreamerInfo(TAttFill.class));
+            list.add(Utilities.getStreamerInfo(TAttLine.class));
+            list.add(Utilities.getStreamerInfo(TAttMarker.class));
+            list.add(Utilities.getStreamerInfo(TAxis.class));
+            list.add(Utilities.getStreamerInfo(TH1.class));
+            list.add(Utilities.getStreamerInfo(TH1D.class));
+            list.add(Utilities.getStreamerInfo(TList.class));
+            list.add(Utilities.getStreamerInfo(TSeqCollection.class));
+            list.add(Utilities.getStreamerInfo(TCollection.class));
+            list.add(Utilities.getStreamerInfo(THashList.class));
+            list.add(Utilities.getStreamerInfo(TNamed.class));
+            //list.add(Utilities.getStreamerInfo(TObject.class));
+            //list.add(Utilities.getStreamerInfo(TString.class));
+            list.add(Utilities.getStreamerInfo(TObjString.class));
+        } catch (StreamerInfoException ex) {
+            throw new IOException(ex);
+        }
 
     }
 
@@ -115,8 +117,8 @@ public class TFile implements Closeable {
         for (TKey record : dataRecords) {
             record.writeRecord(out);
         }
-//        seekInfoRecord.writeRecord(out);
-//        fNbytesInfo.set(seekInfoRecord.size);
+        seekInfoRecord.writeRecord(out);
+        fNbytesInfo.set(seekInfoRecord.size);
         seekKeysRecord.writeRecord(out);
         topLevelDirectory.fNbytesKeys = seekKeysRecord.size;
         fEND.set(out.getFilePointer());
@@ -205,7 +207,7 @@ public class TFile implements Closeable {
     /**
      * A class representing a record within the root file.
      */
-    @RootClass(version=0, hasStandardHeader=false)
+    @RootClass(version = 0, hasStandardHeader = false)
     private static class TKey implements RootObject {
 
         private TString className;
@@ -245,12 +247,7 @@ public class TFile implements Closeable {
          * @throws IOException
          */
         void writeRecord(RootRandomAccessFile out) throws IOException {
-            // Write all the objects associated with this record into a new DataBuffer
-            RootBufferedOutputStream buffer = new RootBufferedOutputStream();
-            for (RootObject object : objects) {
-                buffer.writeObject(object);
-            }
-            buffer.close();
+
             fDatimeC = new TDatime();
             long seekKey = out.getFilePointer();
             fSeekKey.set(seekKey);
@@ -261,11 +258,18 @@ public class TFile implements Closeable {
             out.writeObject(fName);
             out.writeObject(fTitle);
             long dataPos = out.getFilePointer();
+            keyLen = (int) (dataPos - seekKey);
+            // Write all the objects associated with this record into a new DataBuffer
+            // TODO: Is there any reason to buffer if we are not going to compress?
+            RootBufferedOutputStream buffer = new RootBufferedOutputStream(keyLen);
+            for (RootObject object : objects) {
+                buffer.writeObject(object);
+            }
+            buffer.close();
             buffer.writeTo(out);
             long endPos = out.getFilePointer();
             objLen = (int) (endPos - dataPos);
             size = (int) (endPos - seekKey);
-            keyLen = (int) (dataPos - seekKey);
             out.seek(seekKey);
             out.writeInt(size);                      // Length of compressed object
             out.writeShort(keyVersion);           // TKey version identifier
@@ -304,8 +308,7 @@ public class TFile implements Closeable {
          * @param out
          * @throws IOException
          */
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeInt(size);
             out.writeShort(keyVersion);
             out.writeInt(objLen);
@@ -325,7 +328,7 @@ public class TFile implements Closeable {
      * how big the file is, this may be written as either a 32bit or 64 bit
      * integer.
      */
-    @RootClass(version=0, hasStandardHeader=false)
+    @RootClass(version = 0, hasStandardHeader = false)
     private static class Pointer implements RootObject {
 
         private long value;
@@ -353,8 +356,7 @@ public class TFile implements Closeable {
             return value;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             if (out.isLargeFile()) {
                 out.writeLong(value);
             } else {
@@ -370,21 +372,20 @@ public class TFile implements Closeable {
      * built-in UUID support which may or may not be strictly compatible with
      * Root's expected definition of the UUID.
      */
-    @RootClass(version=1, hasStandardHeader=false)
+    @RootClass(version = 1, hasStandardHeader = false)
     private static class TUUID implements RootObject {
 
         private UUID uuid = UUID.randomUUID();
         private final static int version = 1;
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeShort(version);
             out.writeLong(uuid.getMostSignificantBits());
             out.writeLong(uuid.getLeastSignificantBits());
         }
     }
 
-    @RootClass(version=0, hasStandardHeader=false)
+    @RootClass(version = 0, hasStandardHeader = false)
     public static class TString implements RootObject {
 
         private String string;
@@ -398,8 +399,7 @@ public class TFile implements Closeable {
             return empty;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             byte[] chars = string.getBytes();
             int l = chars.length;
             if (l < 255) {
@@ -415,6 +415,9 @@ public class TFile implements Closeable {
             int l = string.getBytes().length;
             return l < 255 ? l + 1 : l + 5;
         }
+        public String getString() {
+            return string;
+        }
     }
 
     /**
@@ -422,7 +425,7 @@ public class TFile implements Closeable {
      * directory associated with a Root file, and may or may not be
      * subdirectories within the file.
      */
-    @RootClass(version=5,hasStandardHeader=false)
+    @RootClass(version = 5, hasStandardHeader = false)
     private static class TDirectory implements RootObject {
 
         private TDatime fDatimeC;
@@ -443,8 +446,7 @@ public class TFile implements Closeable {
             fSeekKeys = keys;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeShort(version);
             out.writeObject(fDatimeC);
             out.writeObject(fDatimeF);
@@ -469,13 +471,13 @@ public class TFile implements Closeable {
             tList.add(record);
         }
     }
-    @RootClass(version=0, hasStandardHeader=false)
+
+    @RootClass(version = 0, hasStandardHeader = false)
     private static class TKeyList implements RootObject {
 
         private List<RootObject> list = new ArrayList<>();
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeInt(list.size());
             for (RootObject o : list) {
                 out.writeObject(o);
@@ -491,52 +493,60 @@ public class TFile implements Closeable {
     public static class TObjArray<A extends RootObject> extends TSeqCollection<A> implements RootObject {
 
         private int fLowerBound = 0;
-        private int fLast = 0;
-        
-        @Override
-        public void write(RootOutput out) throws IOException {
-            super.write(out);
+
+        private void write(RootOutput out) throws IOException {
+            out.writeObject(name);
+            out.writeInt(list.size());
             out.writeInt(fLowerBound);
-            out.writeInt(fLast);
+            for (RootObject o : list) {
+                out.writeObjectRef(o);
+            }
         }
     }
-    
-    @RootClass(version = 5)
+
+    @RootClass(version = 5, checkSum=2043183783)
     public static class TList<A extends RootObject> extends TSeqCollection<A> implements RootObject {
 
-        @Override
-        public void write(RootOutput out) throws IOException {
-            super.write(out);
-        }
-    }
-
-    @RootClass(version = 0)
-    private static class TSeqCollection<A extends RootObject> extends TCollection<A> {
-    }
-
-    @RootClass(version = 3)
-    private static class TCollection<A extends RootObject> extends TObject {
-
-        @StreamerInfo("name of the collection")
-        private TString name = TString.empty();
-        @StreamerInfo("number of elements in the collection")
-        private List<A> list = new ArrayList<>();
-
-        @Override
-        public void write(RootOutput out) throws IOException {
-            super.write(out);
+        private void write(RootOutput out) throws IOException {
             out.writeObject(name);
             out.writeInt(list.size());
             for (RootObject o : list) {
                 out.writeObjectRef(o);
+                out.writeByte(0);
             }
+        }
+    }
+
+    @RootClass(version = 0, checkSum=-677769907, hasStandardHeader = false)
+    private static class TSeqCollection<A extends RootObject> extends TCollection<A> {
+
+        private void write(RootOutput out) throws IOException {
+        }
+    }
+
+    @RootClass(version = 3, checkSum=-1882108578, hasStandardHeader = false)
+    private static class TCollection<A extends RootObject> extends TObject implements Iterable<A> {
+
+        @StreamerInfo("name of the collection")
+        TString name = TString.empty();
+        @StreamerInfo("number of elements in the collection")
+        private int fSize;
+        List<A> list = new ArrayList<>();
+
+        private void write(RootOutput out) throws IOException {
         }
 
         public void add(A record) {
             list.add(record);
         }
+
+        @Override
+        public Iterator<A> iterator() {
+            return list.iterator();
+        }
     }
-    @RootClass(version=0,hasStandardHeader=false)
+
+    @RootClass(version = 0, hasStandardHeader = false)
     private static class WeirdExtraNameAndTitle implements RootObject {
 
         private final TString fName;
@@ -547,22 +557,20 @@ public class TFile implements Closeable {
             this.fTitle = fTitle;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeObject(fName);
             out.writeObject(fTitle);
         }
     }
 
-    @RootClass(version = 1, title = "Basic ROOT object", hasStandardHeader=false)
+    @RootClass(version = 1, checkSum=1389989441, title = "Basic ROOT object", hasStandardHeader = false)
     public static class TObject implements RootObject {
 
         private final static int fUniqueID = 0;
         private int fBits = 0x03000000;
         private final static int version = 1;
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeShort(version);
             out.writeInt(fUniqueID);
             out.writeInt(fBits);
@@ -574,10 +582,11 @@ public class TFile implements Closeable {
         }
     }
 
-    @RootClass(version=1)
+    @RootClass(version = 1, checkSum=-68599943, title="The basis for a named object (name, title)")
     public static class TNamed extends TObject {
-
+        @StreamerInfo("object identifier")
         private TString name;
+        @StreamerInfo("object title")
         private TString title;
 
         public TNamed(TString name, TString title) {
@@ -585,9 +594,7 @@ public class TFile implements Closeable {
             this.title = title;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
-            super.write(out);
+        private void write(RootOutput out) throws IOException {
             out.writeObject(name);
             out.writeObject(title);
         }
@@ -596,16 +603,16 @@ public class TFile implements Closeable {
             this.title = title;
         }
 
-        private TString getName() {
+        public TString getName() {
             return name;
         }
 
-        private TString getTitle() {
+        public TString getTitle() {
             return title;
         }
     }
 
-    @RootClass(version = 1)
+    @RootClass(version = 1, checkSum=1369587346, title="Line Attributes")
     static class TAttLine implements RootObject {
 
         @StreamerInfo("line color")
@@ -616,15 +623,14 @@ public class TFile implements Closeable {
         private short fLineWidth = 1;
         private final static int version = 1;
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeShort(fLineColor);
             out.writeShort(fLineStyle);
             out.writeShort(fLineWidth);
         }
     }
 
-    @RootClass(version = 1)
+    @RootClass(version = 1, checkSum=1204118360, title="Fill Area Attributes")
     static class TAttFill implements RootObject {
 
         @StreamerInfo("fill area color")
@@ -632,14 +638,13 @@ public class TFile implements Closeable {
         @StreamerInfo("fill area style")
         private short fFillStyle = 1001;
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeShort(fFillColor);
             out.writeShort(fFillStyle);
         }
     }
 
-    @RootClass(version = 2)
+    @RootClass(version = 2, checkSum=-87219836, title="Marker Attributes")
     static class TAttMarker implements RootObject {
 
         @StreamerInfo("Marker color index")
@@ -649,15 +654,14 @@ public class TFile implements Closeable {
         @StreamerInfo("Marker size")
         private float fMarkerSize = 1;
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeShort(fMarkerColor);
             out.writeShort(fMarkerStyle);
             out.writeFloat(fMarkerSize);
         }
     }
 
-    @RootClass(version = 4)
+    @RootClass(version = 4, checkSum=1395276684, title="Axis Attributes")
     public static class TAttAxis implements RootObject {
 
         @StreamerInfo("Number of divisions(10000*n3 + 100*n2 + n1)")
@@ -684,8 +688,7 @@ public class TFile implements Closeable {
         private short fTitleFont = 62;
         private final static int version = 4;
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeInt(fNdivisions);
             out.writeShort(fAxisColor);
             out.writeShort(fLabelColor);
@@ -700,10 +703,10 @@ public class TFile implements Closeable {
         }
     }
 
-    @RootClass(version = 9)
+    @RootClass(version = 9, checkSum=2116140609)
     public static class TAxis extends TNamed {
 
-        @StreamerInfo(value = "Axis Attributes", type = "BASE")
+        @StreamerInfo(value = "Axis Attributes", type = StreamerInfo.Type.kBase)
         private TAttAxis tAttAxis = new TAttAxis();
         @StreamerInfo("Number of bins")
         private int fNbins;
@@ -717,13 +720,13 @@ public class TFile implements Closeable {
         private int fFirst = 0;
         @StreamerInfo("last bin to display")
         private int fLast = 0;
-        @StreamerInfo(value = "second bit status word", type = "UShort_t")
+        @StreamerInfo(value = "second bit status word", type = StreamerInfo.Type.kUShort)
         private short fBits2 = 0;
         @StreamerInfo("on/off displaying time values instead of numerics")
         private boolean fTimeDisplay = false;
         @StreamerInfo("Date&time format, ex: 09/12/99 12:34:00")
         private TString fTimeFormat;
-        @StreamerInfo(value = "List of labels", type = "Pointer")
+        @StreamerInfo(value = "List of labels", type = StreamerInfo.Type.kObjectP)
         private THashList fLabels;
 
         TAxis(TString name, int nBins, double xMin, double xMax) {
@@ -733,9 +736,7 @@ public class TFile implements Closeable {
             this.fXmax = xMax;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
-            super.write(out);
+        private void write(RootOutput out) throws IOException {
             out.writeObject(tAttAxis);
             out.writeInt(fNbins);
             out.writeDouble(fXmin);
@@ -750,8 +751,8 @@ public class TFile implements Closeable {
         }
     }
 
-    @RootClass(version=0, hasStandardHeader=false)
-    static class TArrayD implements RootObject {
+    @RootClass(version = 1, hasStandardHeader = false, title="Array of doubles")
+    public static class TArrayD implements RootObject {
 
         private double[] fArray;
 
@@ -759,38 +760,27 @@ public class TFile implements Closeable {
             this.fArray = array;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
+        private void write(RootOutput out) throws IOException {
             out.writeInt(fArray.length);
             for (double d : fArray) {
                 out.writeDouble(d);
             }
         }
     }
-    @RootClass(version=0)
-    static class THashList extends TUnimplemented {
+
+    @RootClass(version = 0, checkSum=302164956)
+    static class THashList extends TList {
     }
 
-    /**
-     * A base class for object which could be implemented one day, but are
-     * currently never instantiated (i.e. the references are always null)
-     */
-    static class TUnimplemented implements RootObject {
 
-        @Override
-        public void write(RootOutput out) throws IOException {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-    }
-
-    @RootClass(version = 6)
+    @RootClass(version = 6, checkSum=-381522971, title="1-Dim histogram base class")
     static class TH1 extends TNamed {
 
-        @StreamerInfo(value = "Line Attributes", type = "BASE")
+        @StreamerInfo(value = "Line Attributes", type = StreamerInfo.Type.kBase)
         private TAttLine tAttLine = new TAttLine();
-        @StreamerInfo(value = "Fill area Attributes", type = "BASE")
+        @StreamerInfo(value = "Fill area Attributes", type = StreamerInfo.Type.kBase)
         private TAttFill tAttFill = new TAttFill();
-        @StreamerInfo(value = "Marker Attributes", type = "BASE")
+        @StreamerInfo(value = "Marker Attributes", type = StreamerInfo.Type.kBase)
         private TAttMarker tAttMarker = new TAttMarker();
         @StreamerInfo("number of bins(1D), cells (2D) +U/Overflows")
         private int fNcells;
@@ -826,13 +816,12 @@ public class TFile implements Closeable {
         private TArrayD fSumw2;
         @StreamerInfo("histogram options")
         private TString fOption = TString.empty();
-        @StreamerInfo(value = "Pointer to list of functions (fits and user)", type = "POINTER")
+        @StreamerInfo(value = "Pointer to list of functions (fits and user)", type = StreamerInfo.Type.kObjectp)
         private TList fFunctions = new TList();
         @StreamerInfo("fBuffer size")
         private int fBufferSize = 0;
-        @StreamerInfo(value = "entry buffer", size = "fBufferSize")
-        private int[] fBuffer = null;
-        @StreamerInfo("WTF?")
+        @StreamerInfo(value = "entry buffer", counter = "fBufferSize")
+        private double[] fBuffer = null;
         private EBinErrorOpt fBinStatErrOpt = EBinErrorOpt.kNormal;
 
         private enum EBinErrorOpt {
@@ -850,9 +839,7 @@ public class TFile implements Closeable {
             fNcells = nBins + 2;
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
-            super.write(out);
+        private void write(RootOutput out) throws IOException {
             out.writeObject(tAttLine);
             out.writeObject(tAttFill);
             out.writeObject(tAttMarker);
@@ -876,7 +863,7 @@ public class TFile implements Closeable {
             out.writeObject(fFunctions);
             out.writeInt(fBufferSize);
             for (int i = 0; i < fBufferSize; i++) {
-                out.writeInt(fBuffer[i]);
+                out.writeDouble(fBuffer[i]);
             }
             out.writeByte(fBinStatErrOpt.ordinal());
         }
@@ -905,7 +892,7 @@ public class TFile implements Closeable {
     @RootClass(version = 1)
     static class TH1D extends TH1 {
 
-        @StreamerInfo("Array of doubles")
+        @StreamerInfo(value="Array of doubles", type = StreamerInfo.Type.kBase)
         private TArrayD array;
 
         TH1D(TString name, int nBins, double xMin, double xMax, double[] data) {
@@ -913,10 +900,7 @@ public class TFile implements Closeable {
             array = new TArrayD(data);
         }
 
-        @Override
-        public void write(RootOutput out) throws IOException {
-            //FIXME: This does not work, because no longer writes the header!
-            super.write(out);
+        private void write(RootOutput out) throws IOException {
             out.writeObject(array);
         }
     }

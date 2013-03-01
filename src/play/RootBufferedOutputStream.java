@@ -3,6 +3,8 @@ package play;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import play.annotations.Utilities;
@@ -20,9 +22,11 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
     private static final int kMapOffset = 2;
     private final RootByteArrayOutputStream buffer;
     private Map<String, Long> classMap = new HashMap<>();
+    private int offset;
 
-    RootBufferedOutputStream() {
+    RootBufferedOutputStream(int offset) {
         this(new RootByteArrayOutputStream());
+        this.offset = offset;
     }
 
     private RootBufferedOutputStream(RootByteArrayOutputStream buffer) {
@@ -51,37 +55,57 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
 
     @Override
     public void seek(long position) {
-        buffer.seek(position);
+        buffer.seek(position-offset);
     }
 
     @Override
     public long getFilePointer() {
-        return buffer.getFilePointer();
+        return buffer.getFilePointer()+offset;
     }
 
     @Override
     public Map<String, Long> getClassMap() {
         return classMap;
     }
-    
 
     static void writeObject(RootOutput out, RootObject o) throws IOException {
         if (o == null) {
             out.writeInt(0);
         } else {
-            RootClassInfo classInfo = Utilities.getClassInfo(o.getClass());
+            writeObject(out, o, o.getClass());
+        }
+    }
+
+    static void writeObject(RootOutput out, RootObject o, Class c) throws IOException {
+        try {
+            RootClassInfo classInfo = Utilities.getClassInfo(c);
             if (classInfo.hasStandardHeader()) {
+
                 long objectPointer = out.getFilePointer();
                 out.writeInt(0); // space for length
                 out.writeShort(classInfo.getVersion());
-                o.write(out);
+                Class sc = c.getSuperclass();
+                if (RootObject.class.isAssignableFrom(sc)) {
+                    writeObject(out, o, sc);
+                }
+                Method m = c.getDeclaredMethod("write", RootOutput.class);
+                m.setAccessible(true);
+                m.invoke(o, out);
                 long end = out.getFilePointer();
                 out.seek(objectPointer);
                 out.writeInt(kByteCountMask | (int) (end - objectPointer - 4));
                 out.seek(end);
             } else {
-                o.write(out);
+                Class sc = c.getSuperclass();
+                if (RootObject.class.isAssignableFrom(sc)) {
+                    writeObject(out, o, sc);
+                }
+                Method m = c.getDeclaredMethod("write", RootOutput.class);
+                m.setAccessible(true);
+                m.invoke(o, out);
             }
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            throw new IOException("Problem writing object of class "+c.getName(),ex);
         }
     }
 
@@ -97,11 +121,11 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
             out.write(className.getBytes());
             out.writeByte(0); // Null terminated
             out.getClassMap().put(className, address);
+            System.out.println(className+"="+address);
         } else {
             out.writeInt(kClassMask | (address.intValue() + kMapOffset));
         }
-        out.writeShort(classInfo.getVersion());
-        o.write(out);
+        writeObject(out,o,o.getClass());
         long end = out.getFilePointer();
         out.seek(objectPointer);
         out.writeInt(0x40000000 | (int) (end - objectPointer - 4));

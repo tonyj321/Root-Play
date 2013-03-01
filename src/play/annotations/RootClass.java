@@ -16,4 +16,5 @@ public @interface RootClass {
     String title() default ""; 
     int version();
     boolean hasStandardHeader() default true;
+    int checkSum() default 0;
 }

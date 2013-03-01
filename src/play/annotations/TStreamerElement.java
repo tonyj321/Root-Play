@@ -7,7 +7,7 @@ import play.TFile.TNamed;
 import play.TFile.TString;
 
 @RootClass(version = 4)
-public class TStreamerElement extends TNamed {
+public abstract class TStreamerElement extends TNamed {
 
     @StreamerInfo("element type")
     private int fType;
@@ -21,24 +21,25 @@ public class TStreamerElement extends TNamed {
     private int[] fMaxIndex = new int[5];
     @StreamerInfo("Data type name of data member")
     private TString fTypeName;
+    private StreamerInfo.Type type;
 
-    TStreamerElement(Field f, StreamerInfo info, int type, int size, TString typeName) {
+    TStreamerElement(Field f, StreamerInfo info, StreamerInfo.Type type, int size, TString typeName) {
         super(new TString(f.getName()), new TString(info.value()));
-        this.fType = type;
+        this.type = type;
+        this.fType = type.getValue();
         this.fSize = size;
         this.fTypeName = typeName;
     }
 
-    TStreamerElement(Class c, RootClass rootClass, int type, int size, TString typeName) {
+    TStreamerElement(Class c, RootClass rootClass, StreamerInfo.Type type, int size, TString typeName) {
         super(new TString(TStreamerInfo.getClassName(rootClass, c)), new TString(rootClass.title()));
-        this.fType = type;
+        this.type = type;
+        this.fType = type.getValue();
         this.fSize = size;
         this.fTypeName = typeName;
     }
 
-    @Override
-    public void write(RootOutput out) throws IOException {
-        super.write(out);
+    private void write(RootOutput out) throws IOException {
         out.writeInt(fType);
         out.writeInt(fSize);
         out.writeInt(fArrayLength);
@@ -49,8 +50,30 @@ public class TStreamerElement extends TNamed {
         out.writeObject(fTypeName);
     }
 
+    public TString getTypeName() {
+        return fTypeName;
+    }
+
+    public int getArrayDim() {
+        return fArrayDim;
+    }
+
+    public int getMaxIndex(int index) {
+        return fMaxIndex[index];
+    }
+    
+    public StreamerInfo.Type getType() {
+        return type;
+    }
+   
+
     @Override
     public String toString() {
         return "TStreamerElement{" + "fType=" + fType + ", fSize=" + fSize + ", fArrayLength=" + fArrayLength + ", fArrayDim=" + fArrayDim + ", fMaxIndex=" + fMaxIndex + ", fTypeName=" + fTypeName + '}';
+    }
+
+    void setType(StreamerInfo.Type type) {
+        this.type = type;
+        this.fType = type.getValue();
     }
 }

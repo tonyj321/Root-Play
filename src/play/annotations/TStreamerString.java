@@ -11,13 +11,10 @@ import play.TFile.TString;
  */
 @RootClass(version=2)
 public class TStreamerString extends TStreamerElement {
-    public static final TString T_STRING = new TString("TString");
     
-    TStreamerString(Field f, StreamerInfo info) {
-        super(f,info,65,8, T_STRING);
+    TStreamerString(Field f, StreamerInfo i, StreamerInfo.Type type, int size, TString name) {
+        super(f, i, type, size, name);
     }
-    @Override
-    public void write(RootOutput out) throws IOException {
-        super.write(out);
+    private void write(RootOutput out) throws IOException {
     }
 }

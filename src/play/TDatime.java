@@ -31,8 +31,7 @@ class TDatime implements RootObject {
         fDatime = year << 26 | month << 22 | day << 17 | hour << 12 | min << 6 | sec;
     }
 
-    @Override
-    public void write(RootOutput out) throws IOException {
+    private void write(RootOutput out) throws IOException {
         out.writeInt(fDatime);
     }
 }

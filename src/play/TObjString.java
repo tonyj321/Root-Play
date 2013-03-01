@@ -13,15 +13,13 @@ import play.annotations.StreamerInfo;
 public class TObjString extends TFile.TObject {
 
     @StreamerInfo("wrapped TString")
-    private TFile.TString string;
+    private TFile.TString fString;
 
     TObjString(String string) {
-        this.string = new TFile.TString(string);
+        this.fString = new TFile.TString(string);
     }
 
-    @Override
-    public void write(RootOutput out) throws IOException {
-        super.write(out);
-        out.writeObject(string);
+    private void write(RootOutput out) throws IOException {
+        out.writeObject(fString);
     }
 }
