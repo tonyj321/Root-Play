@@ -1,27 +1,18 @@
 package play;
 
-import play.classes.THashList;
 import play.classes.TNamed;
-import play.classes.TSeqCollection;
 import play.classes.TList;
-import play.classes.TCollection;
 import play.classes.TUUID;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import play.annotations.ClassDef;
-import play.classes.hist.TAttAxis;
-import play.classes.hist.TAttFill;
-import play.classes.hist.TAttLine;
-import play.classes.hist.TAttMarker;
-import play.classes.hist.TAxis;
 import play.classes.TDatime;
-import play.classes.hist.TH1;
-import play.classes.hist.TH1D;
-import play.classes.TObjString;
 import play.classes.TString;
 
 /**
@@ -53,6 +44,8 @@ public class TFile implements Closeable {
     private final TKey seekKeysRecord;
     // This is the record that is written at fSeekInfo
     private final TKey seekInfoRecord;
+    // Collection of TStreamerInfos to be written to the seekInfoRecord;
+    private Map<String, TStreamerInfo> streamerInfos = new HashMap<>();
 
     /**
      * Open a new file for writing, or overwrite an existing file.
@@ -86,34 +79,13 @@ public class TFile implements Closeable {
         topLevelRecord.add(topLevelDirectory);
         seekKeysRecord.add(topLevelDirectory.getKeyList());
 
-        //Temporarily hard-wire list of TStreamerInfos to be written into fSeekInfo record
-        try {
-            tFile = new TString("TList");
-            fName = new TString("StreamerInfo");
-            fTitle = new TString("Doubly linked list");
-            seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
-            fSeekInfo = seekInfoRecord.getSeekKey();
-            TList<TStreamerInfo> list = new TList<>();
-            seekInfoRecord.add(list);
-            list.add(Utilities.getStreamerInfo(TAttAxis.class));
-            list.add(Utilities.getStreamerInfo(TAttFill.class));
-            list.add(Utilities.getStreamerInfo(TAttLine.class));
-            list.add(Utilities.getStreamerInfo(TAttMarker.class));
-            list.add(Utilities.getStreamerInfo(TAxis.class));
-            list.add(Utilities.getStreamerInfo(TH1.class));
-            list.add(Utilities.getStreamerInfo(TH1D.class));
-            list.add(Utilities.getStreamerInfo(TList.class));
-            list.add(Utilities.getStreamerInfo(TSeqCollection.class));
-            list.add(Utilities.getStreamerInfo(TCollection.class));
-            list.add(Utilities.getStreamerInfo(THashList.class));
-            list.add(Utilities.getStreamerInfo(TNamed.class));
-            //list.add(Utilities.getStreamerInfo(TObject.class));
-            //list.add(Utilities.getStreamerInfo(TString.class));
-            list.add(Utilities.getStreamerInfo(TObjString.class));
-        } catch (StreamerInfoException ex) {
-            throw new IOException(ex);
-        }
-
+        tFile = new TString("TList");
+        fName = new TString("StreamerInfo");
+        fTitle = new TString("Doubly linked list");
+        seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
+        fSeekInfo = seekInfoRecord.getSeekKey();
+        TList<TStreamerInfo> list = new TList<>(streamerInfos.values());
+        seekInfoRecord.add(list);
     }
 
     /**
@@ -127,7 +99,11 @@ public class TFile implements Closeable {
         for (TKey record : dataRecords) {
             record.writeRecord(out);
         }
+        Map<String, TStreamerInfo> streamerInfosSave = streamerInfos;
+        // Avoid concurrent modification exception while writing streamer infos
+        streamerInfos = new HashMap<>();
         seekInfoRecord.writeRecord(out);
+        streamerInfos = streamerInfosSave;
         fNbytesInfo.set(seekInfoRecord.size);
         seekKeysRecord.writeRecord(out);
         topLevelDirectory.fNbytesKeys = seekKeysRecord.size;
@@ -210,11 +186,15 @@ public class TFile implements Closeable {
         return largeFile;
     }
 
+    Map<String, TStreamerInfo> getStreamerInfos() {
+        return streamerInfos;
+    }
+
     /**
      * A class representing a record within the root file.
      */
     @ClassDef(version = 0, hasStandardHeader = false)
-    private static class TKey implements RootObject {
+    private class TKey implements RootObject {
 
         private TString className;
         private TString fName;
@@ -267,7 +247,7 @@ public class TFile implements Closeable {
             keyLen = (int) (dataPos - seekKey);
             // Write all the objects associated with this record into a new DataBuffer
             // TODO: Is there any reason to buffer if we are not going to compress?
-            RootBufferedOutputStream buffer = new RootBufferedOutputStream(keyLen);
+            RootBufferedOutputStream buffer = new RootBufferedOutputStream(TFile.this,keyLen);
             for (RootObject object : objects) {
                 buffer.writeObject(object);
             }
@@ -334,7 +314,7 @@ public class TFile implements Closeable {
      * how big the file is, this may be written as either a 32bit or 64 bit
      * integer.
      */
-    @ClassDef(version = 0, hasStandardHeader = false)
+    @ClassDef(hasStandardHeader = false, suppressTStreamerInfo=true)
     static class Pointer implements RootObject {
 
         private long value;
@@ -441,7 +421,7 @@ public class TFile implements Closeable {
         }
     }
 
-    @ClassDef(version = 0, hasStandardHeader = false)
+    @ClassDef(version = 0, hasStandardHeader = false, suppressTStreamerInfo=true)
     private static class WeirdExtraNameAndTitle implements RootObject {
 
         private final TString fName;

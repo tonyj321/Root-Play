@@ -11,12 +11,12 @@ import java.util.Map;
  *
  * @author tonyj
  */
-class RootRandomAccessFile extends RandomAccessFile implements RootOutput {
+class RootRandomAccessFile extends RandomAccessFile implements RootOutputNonPublic {
 
     private final TFile tFile;
     private Map<String, Long> classMap = new HashMap<>();
 
-    public RootRandomAccessFile(File file, TFile tFile) throws FileNotFoundException {
+    RootRandomAccessFile(File file, TFile tFile) throws FileNotFoundException {
         super(file, "rw");
         this.tFile = tFile;
     }
@@ -39,5 +39,10 @@ class RootRandomAccessFile extends RandomAccessFile implements RootOutput {
     @Override
     public Map<String, Long> getClassMap() {
         return classMap;
+    }
+
+    @Override
+    public Map<String, TStreamerInfo> getStreamerInfos() {
+        return tFile.getStreamerInfos();
     }
 }

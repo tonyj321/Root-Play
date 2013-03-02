@@ -13,7 +13,7 @@ import play.Utilities.RootClassInfo;
  *
  * @author tonyj
  */
-class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
+class RootBufferedOutputStream extends DataOutputStream implements RootOutputNonPublic {
 
     private static final int kByteCountMask = 0x40000000;
     private static final int kNewClassTag = 0xFFFFFFFF;
@@ -22,15 +22,17 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
     private final RootByteArrayOutputStream buffer;
     private Map<String, Long> classMap = new HashMap<>();
     private int offset;
+    private final TFile tFile;
 
-    RootBufferedOutputStream(int offset) {
-        this(new RootByteArrayOutputStream());
+    RootBufferedOutputStream(TFile tFile, int offset) {
+        this(tFile,new RootByteArrayOutputStream());
         this.offset = offset;
     }
 
-    private RootBufferedOutputStream(RootByteArrayOutputStream buffer) {
+    private RootBufferedOutputStream(TFile tFile, RootByteArrayOutputStream buffer) {
         super(buffer);
         this.buffer = buffer;
+        this.tFile = tFile;
     }
 
     @Override
@@ -45,7 +47,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
 
     @Override
     public boolean isLargeFile() {
-        return false;
+        return tFile.isLargeFile();
     }
 
     void writeTo(RootOutput out) throws IOException {
@@ -54,12 +56,12 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
 
     @Override
     public void seek(long position) {
-        buffer.seek(position-offset);
+        buffer.seek(position - offset);
     }
 
     @Override
     public long getFilePointer() {
-        return buffer.getFilePointer()+offset;
+        return buffer.getFilePointer() + offset;
     }
 
     @Override
@@ -67,7 +69,12 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
         return classMap;
     }
 
-    static void writeObject(RootOutput out, RootObject o) throws IOException {
+    @Override
+    public Map<String, TStreamerInfo> getStreamerInfos() {
+        return tFile.getStreamerInfos();
+    }
+
+    static void writeObject(RootOutputNonPublic out, RootObject o) throws IOException {
         if (o == null) {
             out.writeInt(0);
         } else {
@@ -75,9 +82,14 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
         }
     }
 
-    static void writeObject(RootOutput out, RootObject o, Class c) throws IOException {
+    static void writeObject(RootOutputNonPublic out, RootObject o, Class c) throws IOException {
         try {
             RootClassInfo classInfo = Utilities.getClassInfo(c);
+            Map<String, TStreamerInfo> streamerInfos = out.getStreamerInfos();
+            if (!classInfo.suppressStreamerInfo() && !streamerInfos.containsKey(classInfo.getName())) {
+                System.out.println("adding "+classInfo.getName());
+                streamerInfos.put(classInfo.getName(), Utilities.getStreamerInfo(c));
+            }
             if (classInfo.hasStandardHeader()) {
 
                 long objectPointer = out.getFilePointer();
@@ -104,11 +116,11 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
                 m.invoke(o, out);
             }
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new IOException("Problem writing object of class "+c.getName(),ex);
+            throw new IOException("Problem writing object of class " + c.getName(), ex);
         }
     }
 
-    static void writeObjectRef(RootOutput out, RootObject o) throws IOException {
+    static void writeObjectRef(RootOutputNonPublic out, RootObject o) throws IOException {
         long objectPointer = out.getFilePointer();
         out.writeInt(0); // Space for length
         RootClassInfo classInfo = Utilities.getClassInfo(o.getClass());
@@ -120,11 +132,11 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutput {
             out.write(className.getBytes());
             out.writeByte(0); // Null terminated
             out.getClassMap().put(className, address);
-            System.out.println(className+"="+address);
+            System.out.println(className + "=" + address);
         } else {
             out.writeInt(kClassMask | (address.intValue() + kMapOffset));
         }
-        writeObject(out,o,o.getClass());
+        writeObject(out, o, o.getClass());
         long end = out.getFilePointer();
         out.seek(objectPointer);
         out.writeInt(0x40000000 | (int) (end - objectPointer - 4));

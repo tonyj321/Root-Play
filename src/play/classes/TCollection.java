@@ -2,8 +2,8 @@ package play.classes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
@@ -20,7 +20,7 @@ public abstract class TCollection<A extends RootObject> extends TObject implemen
     TString name = TString.empty();
     @StreamerInfo(value = "number of elements in the collection")
     private int fSize;
-    List<A> list = new ArrayList<>();
+    Collection<A> list = new ArrayList<>();
 
     private void write(RootOutput out) throws IOException {
     }

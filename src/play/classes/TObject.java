@@ -4,6 +4,7 @@ import java.io.IOException;
 import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
+import play.annotations.StreamerInfo;
 
 /**
  * Mother of all ROOT objects.
@@ -12,7 +13,10 @@ import play.annotations.ClassDef;
  */
 @ClassDef(version = 1, checkSum = 1389989441, title = "Basic ROOT object", hasStandardHeader = false)
 public class TObject implements RootObject {
+    
+    @StreamerInfo("object unique identifier")
     private static final int fUniqueID = 0;
+    @StreamerInfo("bit field status word")
     private int fBits = 0x03000000;
     private static final int version = 1;
 

@@ -2,7 +2,6 @@ package play;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.StreamerInfo;
 import play.classes.TNamed;

@@ -33,4 +33,6 @@ public @interface ClassDef {
      * very successfully).
      */
     int checkSum() default 0;
+    
+    boolean suppressTStreamerInfo() default false;
 }

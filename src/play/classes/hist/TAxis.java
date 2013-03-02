@@ -11,20 +11,22 @@ import play.classes.TNamed;
 import play.classes.TString;
 
 /**
- * This class manages histogram axis. 
+ * This class manages histogram axis.
+ *
  * @see <a href="http://root.cern.ch/root/htmldoc/TAxis.html">TAxis</a>
  * @author tonyj
  */
 @ClassDef(version = 9, checkSum = 2116140609)
 public class TAxis extends TNamed {
+
     @StreamerInfo(value = "Axis Attributes", type = Type.kBase)
     private TAttAxis tAttAxis = new TAttAxis();
     @StreamerInfo(value = "Number of bins")
-     int fNbins;
+    int fNbins;
     @StreamerInfo(value = "low edge of first bin")
-     double fXmin;
+    double fXmin;
     @StreamerInfo(value = "upper edge of last bin")
-     double fXmax;
+    double fXmax;
     @StreamerInfo(value = "Bin edges array in X")
     private TArrayD fXbins;
     @StreamerInfo(value = "first bin to display")
@@ -60,5 +62,4 @@ public class TAxis extends TNamed {
         out.writeObject(fTimeFormat);
         //out.writeObject(fLabels);
     }
-    
 }

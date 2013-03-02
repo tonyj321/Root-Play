@@ -1,7 +1,6 @@
 package play;
 
 import java.io.IOException;
-import play.RootOutput;
 import play.annotations.ClassDef;
 import play.classes.TNamed;
 import play.classes.TObjArray;

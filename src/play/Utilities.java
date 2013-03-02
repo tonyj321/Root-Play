@@ -128,7 +128,7 @@ class Utilities {
                 if (fClass.isArray()) {
                     Class aClass = fClass.getComponentType();
                     TypeDescription desc = getTypeDescriptionForClass(aClass, rootClass);
-                    desc.setIsArray(true);
+                    desc = desc.arrayType();
                     return desc;
                 }
                 return getTypeDescriptionForClass(fClass, rootClass);
@@ -193,14 +193,17 @@ class Utilities {
         public String getTitle() {
             return rootClass.title();
         }
+
+        boolean suppressStreamerInfo() {
+            return rootClass.suppressTStreamerInfo();
+        }
     }
 
-    static class TypeDescription {
+    private static class TypeDescription {
 
-        final Type type;
-        final int size;
-        TString typeName;
-        private boolean isArray = false;
+        private Type type;
+        private final int size;
+        private TString typeName;
         private boolean isBase = false;
 
         TypeDescription(Type type, int size, TString typeName) {
@@ -212,21 +215,20 @@ class Utilities {
         private boolean isBasicType() {
             return type.getValue() < 20;
         }
-
-        private void setIsArray(boolean b) {
-            typeName = new TString(typeName.toString() + "*");
-            type.setIsArray(true);
-            isArray = b;
+        
+        private boolean isArray() {
+            return type.getValue()>=40 && type.getValue()<60;
         }
 
-        private boolean isArray() {
-            return isArray;
+        private TypeDescription arrayType() {
+            return new TypeDescription(type.arrayType(), size, new TString(typeName.toString() + "*"));
+
         }
 
         public boolean isBase() {
             return isBase;
         }
-
+        // FIXME: Potentially modifying what should be an immutable object
         public void setIsBase(boolean isBase) {
             this.isBase = isBase;
         }

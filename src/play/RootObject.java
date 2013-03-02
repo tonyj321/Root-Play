@@ -5,5 +5,4 @@ package play;
  * @author tonyj
  */
 public interface RootObject {
-    //void write(RootOutput out) throws IOException;
 }

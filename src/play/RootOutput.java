@@ -1,23 +1,19 @@
 package play;
 
-import java.io.Closeable;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * An output stream which is used to write root classes to a file.
  * @author tonyj
  */
-public interface RootOutput extends Closeable, DataOutput {
+public interface RootOutput extends  DataOutput {
 
     void writeObject(RootObject o) throws IOException;
     void writeObjectRef(RootObject o) throws IOException;
-    
+    /**
+     * Test if pointers should be written as 32 or 64 bit integers.
+     * @return <code>true</code> if should use 64 bit pointers.
+     */
     boolean isLargeFile();
-    
-    void seek(long position) throws IOException;
-    long getFilePointer() throws IOException;
-
-    public Map<String,Long> getClassMap();
 }

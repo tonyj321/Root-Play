@@ -10,7 +10,7 @@ import play.annotations.ClassDef;
  * @see <a href="http://root.cern.ch/root/htmldoc/TArrayD.html">TArrayD</a>
  * @author tonyj
  */
-@ClassDef(version = 1, hasStandardHeader = false, title = "Array of doubles")
+@ClassDef(version = 1, hasStandardHeader = false, suppressTStreamerInfo = true, title = "Array of doubles")
 public class TArrayD implements RootObject {
     private double[] fArray;
 
