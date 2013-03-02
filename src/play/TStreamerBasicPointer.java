@@ -1,16 +1,18 @@
-package play.annotations;
+package play;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import play.RootOutput;
-import play.TFile.TString;
+import play.annotations.ClassDef;
+import play.annotations.StreamerInfo;
+import play.classes.TString;
 
 /**
  *
  * @author tonyj
  */
-@RootClass(version=2)
-public class TStreamerBasicPointer extends TStreamerElement {
+@ClassDef(version=2)
+class TStreamerBasicPointer extends TStreamerElement {
 
     @StreamerInfo("version number of the class with the counter")
     private int      fCountVersion;
@@ -19,7 +21,7 @@ public class TStreamerBasicPointer extends TStreamerElement {
     @StreamerInfo("name of the class with the counter")
     private TString  fCountClass;
    
-    TStreamerBasicPointer(Field f, StreamerInfo i, StreamerInfo.Type type, int size, TString name, 
+    TStreamerBasicPointer(Field f, StreamerInfo i, Type type, int size, TString name, 
             TString countName, TString countClass, int countVersion) {
         super(f, i, type, size, name);
         fCountName = countName;

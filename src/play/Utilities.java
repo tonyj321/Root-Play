@@ -1,40 +1,41 @@
-package play.annotations;
+package play;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import play.TFile.TArrayD;
-import play.TFile.TAxis;
-import play.TFile.TNamed;
-import play.TFile.TObject;
-import play.TFile.TString;
-import static play.annotations.StreamerInfo.Type.kObjectP;
-import static play.annotations.StreamerInfo.Type.kObjectp;
-import static play.annotations.StreamerInfo.Type.kTString;
+import play.annotations.ClassDef;
+import play.annotations.StreamerInfo;
+import play.classes.TArrayD;
+import play.classes.TNamed;
+import play.classes.TObject;
+import play.classes.TString;
+import static play.Type.kObjectP;
+import static play.Type.kObjectp;
+import static play.Type.kTString;
 
 /**
  *
  * @author tonyj
  */
-public class Utilities {
+class Utilities {
 
     private static final Map<Class, TypeDescription> primitives = new HashMap<>();
 
     static {
-        primitives.put(Integer.TYPE, new TypeDescription(StreamerInfo.Type.kInt, 4, new TString("Int_t")));
-        primitives.put(Short.TYPE, new TypeDescription(StreamerInfo.Type.kShort, 2, new TString("short")));
-        primitives.put(Float.TYPE, new TypeDescription(StreamerInfo.Type.kFloat, 4, new TString("Float_t")));
-        primitives.put(Double.TYPE, new TypeDescription(StreamerInfo.Type.kDouble, 8, new TString("Double_t")));
-        primitives.put(Boolean.TYPE, new TypeDescription(StreamerInfo.Type.kBool, 1, new TString("Bool_t")));
-        primitives.put(TString.class, new TypeDescription(StreamerInfo.Type.kTString, 8, new TString("TString")));
-        primitives.put(TNamed.class, new TypeDescription(StreamerInfo.Type.kTNamed, 0, new TString("TNamed")));
-        primitives.put(TObject.class, new TypeDescription(StreamerInfo.Type.kTObject, 0, new TString("TString")));
-        primitives.put(TArrayD.class, new TypeDescription(StreamerInfo.Type.kAny, 0, new TString("TArrayD")));
+        primitives.put(Integer.TYPE, new TypeDescription(Type.kInt, 4, new TString("Int_t")));
+        primitives.put(Short.TYPE, new TypeDescription(Type.kShort, 2, new TString("short")));
+        primitives.put(Float.TYPE, new TypeDescription(Type.kFloat, 4, new TString("Float_t")));
+        primitives.put(Double.TYPE, new TypeDescription(Type.kDouble, 8, new TString("Double_t")));
+        primitives.put(Boolean.TYPE, new TypeDescription(Type.kBool, 1, new TString("Bool_t")));
+        primitives.put(TString.class, new TypeDescription(Type.kTString, 8, new TString("TString")));
+        primitives.put(TNamed.class, new TypeDescription(Type.kTNamed, 0, new TString("TNamed")));
+        primitives.put(TObject.class, new TypeDescription(Type.kTObject, 0, new TString("TString")));
+        primitives.put(TArrayD.class, new TypeDescription(Type.kAny, 0, new TString("TArrayD")));
     }
-    private static final Map<StreamerInfo.Type, TypeDescription> explicits = new HashMap<>();
+    private static final Map<Type, TypeDescription> explicits = new HashMap<>();
 
     static {
-        explicits.put(StreamerInfo.Type.kUShort, new TypeDescription(StreamerInfo.Type.kUShort, 2, new TString("UShort_t")));
+        explicits.put(Type.kUShort, new TypeDescription(Type.kUShort, 2, new TString("UShort_t")));
     }
 
     public static RootClassInfo getClassInfo(Class c) {
@@ -42,7 +43,7 @@ public class Utilities {
     }
 
     public static TStreamerInfo getStreamerInfo(Class c) throws StreamerInfoException {
-        RootClass rootClass = (RootClass) c.getAnnotation(RootClass.class);
+        ClassDef rootClass = (ClassDef) c.getAnnotation(ClassDef.class);
         if (rootClass == null) {
             throw new StreamerInfoException("Cannot get streamer info for unannotated class: " + c.getName());
         }
@@ -50,10 +51,10 @@ public class Utilities {
 
         Class s = c.getSuperclass();
         if (s != null) {
-            rootClass = (RootClass) s.getAnnotation(RootClass.class);
+            rootClass = (ClassDef) s.getAnnotation(ClassDef.class);
             if (rootClass != null) {
                 TypeDescription desc = getTypeDescriptionForClass(s, rootClass);
-                info.add(new TStreamerBase(s, rootClass, desc.type == StreamerInfo.Type.kObject ? StreamerInfo.Type.kBase : desc.type , 0));
+                info.add(new TStreamerBase(s, rootClass, desc.type == Type.kObject ? Type.kBase : desc.type , 0));
             }
         }
 
@@ -80,10 +81,10 @@ public class Utilities {
                 throw new StreamerInfoException("Element with counter is not an array");
             }
             TStreamerElement index = info.findElementByName(counter);
-            if (index == null || index.getType() != StreamerInfo.Type.kInt) {
+            if (index == null || index.getType() != Type.kInt) {
                 throw new StreamerInfoException("Reference to non-existent or non-integer element " + counter);
             }
-            index.setType(StreamerInfo.Type.kCounter);
+            index.setType(Type.kCounter);
             return new TStreamerBasicPointer(f, streamerInfo, desc.type, desc.size, desc.typeName,
                     new TString(counter), info.getName(), info.getClassVersion());
         }
@@ -94,7 +95,7 @@ public class Utilities {
     private static TStreamerElement createElementFromType(TypeDescription type, Field f, StreamerInfo info) {
         if (type.isBase) {
             Class fClass = f.getType();
-            RootClass rootClass = (RootClass) fClass.getAnnotation(RootClass.class);
+            ClassDef rootClass = (ClassDef) fClass.getAnnotation(ClassDef.class);
             return new TStreamerBase(fClass, rootClass, type.type, type.size);
         } else if (type.isBasicType()) {
             return new TStreamerBasicType(f, info, type.type, type.size, type.typeName);
@@ -118,9 +119,9 @@ public class Utilities {
     // type mapping specified in the StreamerInfo
     //
     private static TypeDescription getTypeDescriptionForField(Field f, StreamerInfo streamerInfo) {
-        StreamerInfo.Type explicitType = streamerInfo.type();
+        Type explicitType = streamerInfo.type();
         Class fClass = f.getType();
-        RootClass rootClass = (RootClass) fClass.getAnnotation(RootClass.class);
+        ClassDef rootClass = (ClassDef) fClass.getAnnotation(ClassDef.class);
 
         switch (explicitType) {
             case kNone:
@@ -153,7 +154,7 @@ public class Utilities {
         }
     }
 
-    private static TypeDescription getTypeDescriptionForClass(Class fClass, RootClass rootClass) {
+    private static TypeDescription getTypeDescriptionForClass(Class fClass, ClassDef rootClass) {
         TypeDescription desc = primitives.get(fClass);
         if (desc != null) {
             return desc;
@@ -161,17 +162,17 @@ public class Utilities {
         if (rootClass == null) {
             throw new StreamerInfoException("Field is neither a primitive nor annotated as a RootClass");
         }
-        return new TypeDescription(StreamerInfo.Type.kObject, 12, new TString(TStreamerInfo.getClassName(rootClass, fClass)));
+        return new TypeDescription(Type.kObject, 12, new TString(TStreamerInfo.getClassName(rootClass, fClass)));
     }
 
     public static class RootClassInfo {
 
         private final Class javaClass;
-        private final RootClass rootClass;
+        private final ClassDef rootClass;
 
         RootClassInfo(Class c) throws StreamerInfoException {
             this.javaClass = c;
-            this.rootClass = (RootClass) c.getAnnotation(RootClass.class);
+            this.rootClass = (ClassDef) c.getAnnotation(ClassDef.class);
             if (rootClass == null) {
                 throw new StreamerInfoException("Cannot get class info for unannotated class: " + c.getName());
             }
@@ -196,13 +197,13 @@ public class Utilities {
 
     static class TypeDescription {
 
-        final StreamerInfo.Type type;
+        final Type type;
         final int size;
         TString typeName;
         private boolean isArray = false;
         private boolean isBase = false;
 
-        TypeDescription(StreamerInfo.Type type, int size, TString typeName) {
+        TypeDescription(Type type, int size, TString typeName) {
             this.type = type;
             this.size = size;
             this.typeName = typeName;
@@ -213,7 +214,7 @@ public class Utilities {
         }
 
         private void setIsArray(boolean b) {
-            typeName = new TString(typeName.getString() + "*");
+            typeName = new TString(typeName.toString() + "*");
             type.setIsArray(true);
             isArray = b;
         }
@@ -229,10 +230,5 @@ public class Utilities {
         public void setIsBase(boolean isBase) {
             this.isBase = isBase;
         }
-    }
-
-    public static void main(String[] args) throws StreamerInfoException {
-        TStreamerInfo streamerInfo = Utilities.getStreamerInfo(TAxis.class);
-        System.out.println(streamerInfo);
     }
 }

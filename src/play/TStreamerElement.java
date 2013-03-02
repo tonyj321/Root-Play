@@ -1,18 +1,20 @@
-package play.annotations;
+package play;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import play.RootOutput;
-import play.TFile.TNamed;
-import play.TFile.TString;
+import play.annotations.ClassDef;
+import play.annotations.StreamerInfo;
+import play.classes.TNamed;
+import play.classes.TString;
 
-@RootClass(version = 4)
-public abstract class TStreamerElement extends TNamed {
+@ClassDef(version = 4)
+abstract class TStreamerElement extends TNamed {
 
     @StreamerInfo("element type")
-    private int fType;
+     int fType;
     @StreamerInfo("sizeof element")
-    private int fSize;
+     int fSize;
     @StreamerInfo("cumulative size of all array dims")
     private int fArrayLength = 0;
     @StreamerInfo("number of array dimensions")
@@ -20,10 +22,10 @@ public abstract class TStreamerElement extends TNamed {
     @StreamerInfo("Maximum array index for array dimension")
     private int[] fMaxIndex = new int[5];
     @StreamerInfo("Data type name of data member")
-    private TString fTypeName;
-    private StreamerInfo.Type type;
+     TString fTypeName;
+    Type type;
 
-    TStreamerElement(Field f, StreamerInfo info, StreamerInfo.Type type, int size, TString typeName) {
+    TStreamerElement(Field f, StreamerInfo info, Type type, int size, TString typeName) {
         super(new TString(f.getName()), new TString(info.value()));
         this.type = type;
         this.fType = type.getValue();
@@ -31,7 +33,7 @@ public abstract class TStreamerElement extends TNamed {
         this.fTypeName = typeName;
     }
 
-    TStreamerElement(Class c, RootClass rootClass, StreamerInfo.Type type, int size, TString typeName) {
+    TStreamerElement(Class c, ClassDef rootClass, Type type, int size, TString typeName) {
         super(new TString(TStreamerInfo.getClassName(rootClass, c)), new TString(rootClass.title()));
         this.type = type;
         this.fType = type.getValue();
@@ -62,7 +64,7 @@ public abstract class TStreamerElement extends TNamed {
         return fMaxIndex[index];
     }
     
-    public StreamerInfo.Type getType() {
+    public Type getType() {
         return type;
     }
    
@@ -72,7 +74,7 @@ public abstract class TStreamerElement extends TNamed {
         return "TStreamerElement{" + "fType=" + fType + ", fSize=" + fSize + ", fArrayLength=" + fArrayLength + ", fArrayDim=" + fArrayDim + ", fMaxIndex=" + fMaxIndex + ", fTypeName=" + fTypeName + '}';
     }
 
-    void setType(StreamerInfo.Type type) {
+    void setType(Type type) {
         this.type = type;
         this.fType = type.getValue();
     }

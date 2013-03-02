@@ -1,24 +1,29 @@
-package play;
+package play.classes;
 
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import play.annotations.RootClass;
+import play.RootObject;
+import play.RootOutput;
+import play.annotations.ClassDef;
 
 /**
- *
+ * This class stores the date and time with a precision of one second
+ * in an unsigned 32 bit word (e.g. 950130 124559). The date is stored
+ * with the origin being the 1st january 1995.
+ * @see <a href="http://root.cern.ch/root/htmldoc/TDatime.html">TDatime</a>
  * @author tonyj
  */
-@RootClass(version=0, hasStandardHeader=false)
-class TDatime implements RootObject {
+@ClassDef(hasStandardHeader=false)
+public class TDatime implements RootObject {
     private int fDatime;
 
-    TDatime() {
+    public TDatime() {
         this(new Date());
     }
 
-    TDatime(Date date) {
+    public TDatime(Date date) {
         Calendar calendar = new GregorianCalendar();
         calendar.setTime(date);
         int year = calendar.get(Calendar.YEAR) - 1995;

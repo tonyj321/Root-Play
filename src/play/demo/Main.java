@@ -1,9 +1,11 @@
-package play;
+package play.demo;
 
+import play.classes.TObjString;
 import java.io.IOException;
 import java.util.Random;
-import play.TFile.TH1D;
-import play.TFile.TString;
+import play.TFile;
+import play.classes.hist.TH1D;
+import play.classes.TString;
 
 /**
  *

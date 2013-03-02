@@ -1,10 +1,10 @@
-package play.annotations;
+package play;
 
 /**
  *
  * @author tonyj
  */
-public class StreamerInfoException extends RuntimeException {
+class StreamerInfoException extends RuntimeException {
 
     StreamerInfoException(String message) {
         super(message);
