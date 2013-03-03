@@ -46,11 +46,11 @@ class StreamerClassInfo {
     }
 
     public int getVersion() {
-        return classDef.version();
+        return classDef == null ? 0 : classDef.version();
     }
 
     public boolean hasStandardHeader() {
-        return classDef.hasStandardHeader();
+        return classDef == null ? true : classDef.hasStandardHeader();
     }
 
     public String getTitle() {
@@ -58,7 +58,7 @@ class StreamerClassInfo {
     }
 
     boolean suppressStreamerInfo() {
-        return classDef.suppressTStreamerInfo();
+        return classDef == null ? false : classDef.suppressTStreamerInfo();
     }
 
     int getCheckSum() {

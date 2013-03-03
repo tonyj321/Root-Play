@@ -137,7 +137,7 @@ public class TFile implements Closeable {
             fName = tNamed.getName();
             fTitle = tNamed.getTitle();
         } else {
-            fName = new TString("string");
+            fName = className;
             fTitle = TString.empty();
         }
         TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir, false);
