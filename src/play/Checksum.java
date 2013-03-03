@@ -25,17 +25,4 @@ class Checksum {
     int getValue() {
         return id;
     }
-
-    public static void main(String[] args) {
-        Checksum ck = new Checksum();
-//        ck.compute("TH1D");
-//        ck.compute("TH1");
-//        ck.compute("TArrayD");
-        ck.compute("TAttFill");
-        ck.compute("fFillColor");
-        ck.compute("Color_t");
-        ck.compute("fFillStyle");
-        ck.compute("Style_t");
-        System.out.printf("%d\n", ck.getValue());
-    }
 }

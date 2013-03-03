@@ -1,7 +1,8 @@
 package play;
 
 /**
- *
+ * An exception which is thrown when an error occurs during processing of
+ * streamer information.
  * @author tonyj
  */
 class StreamerInfoException extends Exception {
