@@ -61,8 +61,8 @@ public class TAxis extends TNamed {
         out.writeInt(fFirst);
         out.writeInt(fLast);
         out.writeShort(fBits2);
-        out.writeShort(fTimeDisplay ? 1 : 0); // TODO: Check this
+        out.writeByte(fTimeDisplay ? 1 : 0); // TODO: Check this
         out.writeObject(fTimeFormat);
-        //out.writeObject(fLabels);
+        out.writeObjectRef(fLabels);
     }
 }

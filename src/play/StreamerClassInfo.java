@@ -20,12 +20,12 @@ class StreamerClassInfo {
     private StreamerClassInfo superClass;
     private final Type type;
 
-    StreamerClassInfo(Class c) throws StreamerInfoException {
+    StreamerClassInfo(Class c){
         this.javaClass = c;
         this.classDef = (ClassDef) c.getAnnotation(ClassDef.class);
-//        if (classDef == null) {
-//            throw new StreamerInfoException("Cannot get class info for unannotated class: " + c.getName());
-//        }
+        if (classDef != null) {
+            checkSum = classDef.checkSum();
+        }
         Title titleAnnotation = (Title) c.getAnnotation(Title.class);
         title = titleAnnotation == null ? null : titleAnnotation.value();
         type = Type.forClass(c);
@@ -108,7 +108,7 @@ class StreamerClassInfo {
     }
 
     Type getType() {
-        return type;
+        return type == Type.kAny ? Type.kBase : type;
     }
 
     int getSize() {
@@ -116,7 +116,7 @@ class StreamerClassInfo {
     }
 
     String getTypeName() {
-        return type.getName() == null ? getName() : type.getName();
+        return "BASE";
     }
 
     StreamerClassInfo getSuperClass() {

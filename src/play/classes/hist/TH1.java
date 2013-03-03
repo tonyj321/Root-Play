@@ -23,12 +23,12 @@ import play.classes.TString;
 @Title("1-Dim histogram base class")
 public class TH1 extends TNamed {
 
-    private @Super
-    TAttLine tAttLine = new TAttLine();
-    private @Super
-    TAttFill tAttFill = new TAttFill();
-    private @Super
-    TAttMarker tAttMarker = new TAttMarker();
+    @Super
+    private TAttLine tAttLine = new TAttLine();
+    @Super
+    private TAttFill tAttFill = new TAttFill();
+    @Super
+    private TAttMarker tAttMarker = new TAttMarker();
     @Title("number of bins(1D), cells (2D) +U/Overflows")
     private int fNcells;
     @Title("X axis descriptor")

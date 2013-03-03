@@ -13,7 +13,7 @@ import play.annotations.ClassDef;
  * Root's expected definition of the UUID.
  * @see <a href="http://root.cern.ch/root/htmldoc/TUUID.html">TUUID</a>
  */
-@ClassDef(version = 1, hasStandardHeader = false)
+@ClassDef(version = 1, hasStandardHeader = false, suppressTStreamerInfo = true)
 public class TUUID implements RootObject {
     private UUID uuid = UUID.randomUUID();
     private static final int version = 1;

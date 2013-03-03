@@ -15,7 +15,7 @@ import play.annotations.ClassDef;
  * @see <a href="http://root.cern.ch/root/htmldoc/TDatime.html">TDatime</a>
  * @author tonyj
  */
-@ClassDef(hasStandardHeader=false)
+@ClassDef(hasStandardHeader=false, suppressTStreamerInfo = true)
 public class TDatime implements RootObject {
     private int fDatime;
 

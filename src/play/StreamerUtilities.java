@@ -9,7 +9,7 @@ import java.lang.reflect.Modifier;
  */
 class StreamerUtilities {
 
-    static StreamerClassInfo getClassInfo(Class c) throws StreamerInfoException {
+    static StreamerClassInfo getClassInfo(Class c) {
         return new StreamerClassInfo(c);
     }
 

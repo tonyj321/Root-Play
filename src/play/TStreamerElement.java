@@ -8,7 +8,7 @@ import play.classes.TString;
 
 @ClassDef(version = 4)
 abstract class TStreamerElement extends TNamed {
-
+    
     @Title("element type")
     int fType;
     @Title("sizeof element")

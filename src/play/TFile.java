@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import play.annotations.ClassDef;
 import play.classes.TDatime;
 import play.classes.TString;
@@ -102,7 +100,7 @@ public class TFile implements Closeable {
             record.writeRecord(out);
         }
         Map<String, TStreamerInfo> streamerInfosSave = streamerInfos;
-        // Avoid concurrent modification exception while writing streamer infos
+        // FIXME: Avoid concurrent modification exception while writing streamer infos
         streamerInfos = new HashMap<>();
         seekInfoRecord.writeRecord(out);
         streamerInfos = streamerInfosSave;
@@ -136,24 +134,20 @@ public class TFile implements Closeable {
      * @param object The object to be written to disk.
      */
     public void add(RootObject object) throws IOException {
-        try {
-            TString className = new TString(StreamerUtilities.getClassInfo(object.getClass()).getName());
-            TString fName, fTitle;
-            if (object instanceof TNamed) {
-                TNamed tNamed = (TNamed) object;
-                fName = tNamed.getName();
-                fTitle = tNamed.getTitle();
-            } else {
-                fName = new TString("string");
-                fTitle = TString.empty();
-            }
-            TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir);
-            record.add(object);
-            dataRecords.add(record);
-            topLevelDirectory.add(record);
-        } catch (StreamerInfoException ex) {
-            throw new IOException("Error getting classinfo for object of class "+object.getClass(),ex);
+        TString className = new TString(StreamerUtilities.getClassInfo(object.getClass()).getName());
+        TString fName, fTitle;
+        if (object instanceof TNamed) {
+            TNamed tNamed = (TNamed) object;
+            fName = tNamed.getName();
+            fTitle = tNamed.getTitle();
+        } else {
+            fName = new TString("string");
+            fTitle = TString.empty();
         }
+        TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir);
+        record.add(object);
+        dataRecords.add(record);
+        topLevelDirectory.add(record);
     }
 
     /**
@@ -253,7 +247,7 @@ public class TFile implements Closeable {
             keyLen = (int) (dataPos - seekKey);
             // Write all the objects associated with this record into a new DataBuffer
             // TODO: Is there any reason to buffer if we are not going to compress?
-            RootBufferedOutputStream buffer = new RootBufferedOutputStream(TFile.this,keyLen);
+            RootBufferedOutputStream buffer = new RootBufferedOutputStream(TFile.this, keyLen);
             for (RootObject object : objects) {
                 buffer.writeObject(object);
             }
@@ -320,7 +314,7 @@ public class TFile implements Closeable {
      * how big the file is, this may be written as either a 32bit or 64 bit
      * integer.
      */
-    @ClassDef(hasStandardHeader = false, suppressTStreamerInfo=true)
+    @ClassDef(hasStandardHeader = false, suppressTStreamerInfo = true)
     static class Pointer implements RootObject {
 
         private long value;
@@ -363,7 +357,7 @@ public class TFile implements Closeable {
      * directory associated with a Root file, and may or may not be
      * subdirectories within the file.
      */
-    @ClassDef(version = 5, hasStandardHeader = false)
+    @ClassDef(version = 5, hasStandardHeader = false, suppressTStreamerInfo = true)
     private static class TDirectory implements RootObject {
 
         private TDatime fDatimeC;
@@ -427,7 +421,7 @@ public class TFile implements Closeable {
         }
     }
 
-    @ClassDef(version = 0, hasStandardHeader = false, suppressTStreamerInfo=true)
+    @ClassDef(version = 0, hasStandardHeader = false, suppressTStreamerInfo = true)
     private static class WeirdExtraNameAndTitle implements RootObject {
 
         private final TString fName;

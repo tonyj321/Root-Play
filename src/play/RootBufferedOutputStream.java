@@ -120,30 +120,35 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
     }
 
     static void writeObjectRef(RootOutputNonPublic out, RootObject o) throws IOException {
-        try {
-            long objectPointer = out.getFilePointer();
-            out.writeInt(0); // Space for length
-            StreamerClassInfo classInfo = StreamerUtilities.getClassInfo(o.getClass());
-            String className = classInfo.getName();
-            Long address = out.getClassMap().get(className);
-            if (address == null) {
-                address = out.getFilePointer();
-                out.writeInt(kNewClassTag);
-                out.write(className.getBytes());
-                out.writeByte(0); // Null terminated
-                out.getClassMap().put(className, address);
-                System.out.println(className + "=" + address);
-            } else {
-                out.writeInt(kClassMask | (address.intValue() + kMapOffset));
-            }
-            writeObject(out, o, o.getClass());
-            long end = out.getFilePointer();
-            out.seek(objectPointer);
-            out.writeInt(0x40000000 | (int) (end - objectPointer - 4));
-            out.seek(end);
-        } catch (StreamerInfoException ex) {
-            throw new IOException("Problem writing object", ex);
+        if (o == null) {
+            out.write(0);
+        } else {
+            writeObjectRef(out, o, o.getClass());
         }
+    }
+
+    static void writeObjectRef(RootOutputNonPublic out, RootObject o, Class c) throws IOException {
+
+        long objectPointer = out.getFilePointer();
+        out.writeInt(0); // Space for length
+        StreamerClassInfo classInfo = StreamerUtilities.getClassInfo(c);
+        String className = classInfo.getName();
+        Long address = out.getClassMap().get(className);
+        if (address == null) {
+            address = out.getFilePointer();
+            out.writeInt(kNewClassTag);
+            out.write(className.getBytes());
+            out.writeByte(0); // Null terminated
+            out.getClassMap().put(className, address);
+            System.out.println(className + "=" + address);
+        } else {
+            out.writeInt(kClassMask | (address.intValue() + kMapOffset));
+        }
+        writeObject(out, o, o.getClass());
+        long end = out.getFilePointer();
+        out.seek(objectPointer);
+        out.writeInt(0x40000000 | (int) (end - objectPointer - 4));
+        out.seek(end);
     }
 
     private static class RootByteArrayOutputStream extends ByteArrayOutputStream {
