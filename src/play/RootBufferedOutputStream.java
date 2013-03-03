@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import play.classes.TString;
 
 /**
  *
@@ -79,6 +80,10 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         if (o == null) {
             out.writeInt(0);
         } else {
+            //FIXME: We should do something more general here
+            if (o instanceof String) {
+                o = new TString((String) o);
+            }
             writeObject(out, o, o.getClass());
         }
     }

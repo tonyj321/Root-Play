@@ -19,14 +19,16 @@ public class POJODemo {
 
     private static class POJO {
 
-        int i = 25;
-        double d = 1234.567;
+        private int i = 25;
+        private double d = 1234.567;
+        private String hello = "Hello World";
 
         // Right now we need an explicit streamer, but soon this will not be 
         // needed.
         private void write(RootOutput out) throws IOException {
             out.writeInt(i);
             out.writeDouble(d);
+            out.writeObject(hello);
         }
     }
 }

@@ -39,7 +39,8 @@ public class TString {
         }
     }
 
-    public int sizeOnDisk() {
+    
+    public static int sizeOnDisk(String string) {
         int l = string.getBytes().length;
         return l < 255 ? l + 1 : l + 5;
     }

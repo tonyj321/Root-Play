@@ -16,7 +16,7 @@ import play.annotations.Title;
 @ClassDef(version = 3, checkSum = -1882108578, hasStandardHeader = false)
 public abstract class TCollection<A> extends TObject implements Iterable<A> {
     @Title("name of the collection")
-    TString name = TString.empty();
+    String name = "";
     @Title("number of elements in the collection")
     private int fSize;
     transient Collection<A> list = new ArrayList<>();

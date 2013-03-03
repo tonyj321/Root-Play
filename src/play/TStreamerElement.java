@@ -4,7 +4,6 @@ import java.io.IOException;
 import play.annotations.ClassDef;
 import play.annotations.Title;
 import play.classes.TNamed;
-import play.classes.TString;
 
 @ClassDef(version = 4)
 abstract class TStreamerElement extends TNamed {
@@ -20,20 +19,20 @@ abstract class TStreamerElement extends TNamed {
     @Title("Maximum array index for array dimension")
     private int[] fMaxIndex = new int[5];
     @Title("Data type name of data member")
-    TString fTypeName;
+    String fTypeName;
 
     TStreamerElement(StreamerFieldInfo field) {
-        super(new TString(field.getName()), new TString(field.getTitle()));
+        super(field.getName(), field.getTitle());
         this.fType = field.getType().getValue();
         this.fSize = field.getSize();
-        this.fTypeName = new TString(field.getTypeName());
+        this.fTypeName = field.getTypeName();
     }
 
     TStreamerElement(StreamerClassInfo superClass) {
-        super(new TString(superClass.getName()), new TString(superClass.getTitle()));
+        super(superClass.getName(), superClass.getTitle());
         this.fType = superClass.getType().getValue();
         this.fSize = superClass.getSize();
-        this.fTypeName = new TString(superClass.getTypeName());
+        this.fTypeName = superClass.getTypeName();
     }
     static TStreamerElement create(StreamerClassInfo c) {
         return new TStreamerBase(c);

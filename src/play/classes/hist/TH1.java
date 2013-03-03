@@ -11,7 +11,6 @@ import play.annotations.Title;
 import play.classes.TArrayD;
 import play.classes.TList;
 import play.classes.TNamed;
-import play.classes.TString;
 
 /**
  * The base histogram class.
@@ -62,7 +61,7 @@ public class TH1 extends TNamed {
     @Title("Array of sum of squares of weights")
     private TArrayD fSumw2;
     @Title("histogram options")
-    private TString fOption = TString.empty();
+    private String fOption = "";
     @Title("Pointer to list of functions (fits and user)")
     @FieldType(value = Type.kObjectp)
     private TList fFunctions = new TList();
@@ -80,11 +79,11 @@ public class TH1 extends TNamed {
         kPoisson2 // errors from Poisson interval at 95% CL (~ 2 sigma)
     }
 
-    public TH1(TString name, int nBins, double xMin, double xMax) {
-        super(name, TString.empty());
-        fXaxis = new TAxis(new TString("xaxis"), nBins, xMin, xMax);
-        fYaxis = new TAxis(new TString("yaxis"), 1, 0, 1);
-        fZaxis = new TAxis(new TString("zAxis"), 1, 0, 1);
+    public TH1(String name, int nBins, double xMin, double xMax) {
+        super(name, "");
+        fXaxis = new TAxis("xaxis", nBins, xMin, xMax);
+        fYaxis = new TAxis("yaxis", 1, 0, 1);
+        fZaxis = new TAxis("zAxis", 1, 0, 1);
         fNcells = nBins + 2;
     }
 

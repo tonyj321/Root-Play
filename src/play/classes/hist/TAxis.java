@@ -10,7 +10,6 @@ import play.annotations.Title;
 import play.classes.TArrayD;
 import play.classes.THashList;
 import play.classes.TNamed;
-import play.classes.TString;
 
 /**
  * This class manages histogram axis.
@@ -40,13 +39,13 @@ public class TAxis extends TNamed {
     @Title("on/off displaying time values instead of numerics")
     private boolean fTimeDisplay = false;
     @Title("Date&time format, ex: 09/12/99 12:34:00")
-    private TString fTimeFormat;
+    private String fTimeFormat;
     @Title("List of labels")
     @FieldType(value = Type.kObjectP)
     private THashList fLabels;
 
-    TAxis(TString name, int nBins, double xMin, double xMax) {
-        super(name, TString.empty());
+    TAxis(String name, int nBins, double xMin, double xMax) {
+        super(name, "");
         this.fNbins = nBins;
         this.fXmin = xMin;
         this.fXmax = xMax;

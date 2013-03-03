@@ -68,21 +68,17 @@ public class TFile implements Closeable {
     public TFile(File file) throws FileNotFoundException, IOException {
 
         out = new RootRandomAccessFile(file, this);
-        TString tFile = new TString("TFile");
-        TString fName = new TString(file.getName());
-        TString fTitle = new TString("");
-        topLevelRecord = new TKey(tFile, fName, fTitle, Pointer.ZERO,true);
-        seekKeysRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN),true);
+        String fName = file.getName();
+        String fTitle = "";
+        topLevelRecord = new TKey("TFile", fName, fTitle, Pointer.ZERO, true);
+        seekKeysRecord = new TKey("TFile", fName, fTitle, new Pointer(fBEGIN), true);
         topLevelDirectory = new TDirectory(Pointer.ZERO, new Pointer(fBEGIN), seekKeysRecord.getSeekKey());
-        topLevelDirectory.fNbytesName = 32 + 2 * fName.sizeOnDisk() + 2 * fTitle.sizeOnDisk();
+        topLevelDirectory.fNbytesName = 32 + 2 * TString.sizeOnDisk(fName) + 2 * TString.sizeOnDisk(fTitle);
         topLevelRecord.add(new WeirdExtraNameAndTitle(fName, fTitle));
         topLevelRecord.add(topLevelDirectory);
         seekKeysRecord.add(topLevelDirectory.getKeyList());
 
-        tFile = new TString("TList");
-        fName = new TString("StreamerInfo");
-        fTitle = new TString("Doubly linked list");
-        seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN),true);
+        seekInfoRecord = new TKey("TList", "StreamerInfo", "Doubly linked list", new Pointer(fBEGIN), true);
         fSeekInfo = seekInfoRecord.getSeekKey();
         TList<TStreamerInfo> list = new TList<>(streamerInfos.values());
         seekInfoRecord.add(list);
@@ -130,15 +126,15 @@ public class TFile implements Closeable {
      * @param object The object to be written to disk.
      */
     public void add(Object object) throws IOException {
-        TString className = new TString(StreamerUtilities.getClassInfo(object.getClass()).getName());
-        TString fName, fTitle;
+        String className = StreamerUtilities.getClassInfo(object.getClass()).getName();
+        String fName, fTitle;
         if (object instanceof TNamed) {
             TNamed tNamed = (TNamed) object;
             fName = tNamed.getName();
             fTitle = tNamed.getTitle();
         } else {
             fName = className;
-            fTitle = TString.empty();
+            fTitle = "";
         }
         TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir, false);
         record.add(object);
@@ -192,9 +188,9 @@ public class TFile implements Closeable {
     @ClassDef(version = 0, hasStandardHeader = false)
     private class TKey {
 
-        private TString className;
-        private TString fName;
-        private TString fTitle;
+        private String className;
+        private String fName;
+        private String fTitle;
         private final static int keyVersion = 4;
         private final static int cycle = 1;
         private Pointer seekPDir;
@@ -216,7 +212,7 @@ public class TFile implements Closeable {
          * @param fTitle The title of the record
          * @param seekPDir A pointer to the parent directory
          */
-        TKey(TString className, TString fName, TString fTitle, Pointer seekPDir, boolean suppressStreamerInfo) {
+        TKey(String className, String fName, String fTitle, Pointer seekPDir, boolean suppressStreamerInfo) {
             this.className = className;
             this.fName = fName;
             this.fTitle = fTitle;
@@ -424,10 +420,10 @@ public class TFile implements Closeable {
     @ClassDef(hasStandardHeader = false, suppressTStreamerInfo = true)
     private static class WeirdExtraNameAndTitle {
 
-        private final TString fName;
-        private final TString fTitle;
+        private final String fName;
+        private final String fTitle;
 
-        public WeirdExtraNameAndTitle(TString fName, TString fTitle) {
+        public WeirdExtraNameAndTitle(String fName, String fTitle) {
             this.fName = fName;
             this.fTitle = fTitle;
         }

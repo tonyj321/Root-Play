@@ -27,7 +27,7 @@ class StreamerClassInfo {
             checkSum = classDef.checkSum();
         }
         Title titleAnnotation = (Title) c.getAnnotation(Title.class);
-        title = titleAnnotation == null ? null : titleAnnotation.value();
+        title = titleAnnotation == null ? "" : titleAnnotation.value();
         type = Type.forClass(c);
     }
     //FIXME: Get rid of mutator

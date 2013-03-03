@@ -17,10 +17,10 @@ import play.annotations.Title;
 public class TObjString extends TObject {
 
     @Title("wrapped TString")
-    TString fString;
+    String fString;
 
     public TObjString(String string) {
-        this.fString = new TString(string);
+        this.fString = string;
     }
 
     private void write(RootOutput out) throws IOException {

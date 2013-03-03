@@ -4,7 +4,6 @@ import java.io.IOException;
 import play.annotations.ClassDef;
 import play.classes.TNamed;
 import play.classes.TObjArray;
-import play.classes.TString;
 
 /**
  *
@@ -18,7 +17,7 @@ class TStreamerInfo extends TNamed {
     private TObjArray<TStreamerElement> fElements = new TObjArray<>();
 
     TStreamerInfo(StreamerClassInfo info) {
-        super(new TString(info.getName()), new TString(info.getTitle()));
+        super(info.getName(), info.getTitle());
         fClassVersion = info.getVersion();
         fCheckSum = info.getCheckSum();
         if (info.getSuperClass()!=null) {

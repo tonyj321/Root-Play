@@ -65,6 +65,7 @@ public enum Type {
         javaToRoot.put(TNamed.class, Type.kTNamed);
         javaToRoot.put(TObject.class, Type.kTObject);
         javaToRoot.put(TArrayD.class, Type.kAny);
+        javaToRoot.put(String.class, Type.kTString);
     }
     
     Type(int v) {
