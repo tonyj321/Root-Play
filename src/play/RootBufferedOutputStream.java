@@ -22,10 +22,12 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
     private Map<String, Long> classMap = new HashMap<>();
     private int offset;
     private final TFile tFile;
+    private boolean suppressStreamerInfo;
 
-    RootBufferedOutputStream(TFile tFile, int offset) {
+    RootBufferedOutputStream(TFile tFile, int offset, boolean suppressStreamerInfo) {
         this(tFile, new RootByteArrayOutputStream());
         this.offset = offset;
+        this.suppressStreamerInfo = suppressStreamerInfo;
     }
 
     private RootBufferedOutputStream(TFile tFile, RootByteArrayOutputStream buffer) {
@@ -70,7 +72,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
 
     @Override
     public Map<String, TStreamerInfo> getStreamerInfos() {
-        return tFile.getStreamerInfos();
+        return suppressStreamerInfo ? null : tFile.getStreamerInfos();
     }
 
     static void writeObject(RootOutputNonPublic out, RootObject o) throws IOException {
@@ -85,7 +87,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         try {
             StreamerClassInfo classInfo = StreamerUtilities.getClassInfo(c);
             Map<String, TStreamerInfo> streamerInfos = out.getStreamerInfos();
-            if (!classInfo.suppressStreamerInfo() && !streamerInfos.containsKey(classInfo.getName())) {
+            if (streamerInfos != null && !classInfo.suppressStreamerInfo() && !streamerInfos.containsKey(classInfo.getName())) {
                 System.out.println("adding " + classInfo.getName());
                 streamerInfos.put(classInfo.getName(), StreamerUtilities.getStreamerInfo(c));
             }

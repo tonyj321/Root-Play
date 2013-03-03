@@ -71,8 +71,8 @@ public class TFile implements Closeable {
         TString tFile = new TString("TFile");
         TString fName = new TString(file.getName());
         TString fTitle = new TString("");
-        topLevelRecord = new TKey(tFile, fName, fTitle, Pointer.ZERO);
-        seekKeysRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
+        topLevelRecord = new TKey(tFile, fName, fTitle, Pointer.ZERO,true);
+        seekKeysRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN),true);
         topLevelDirectory = new TDirectory(Pointer.ZERO, new Pointer(fBEGIN), seekKeysRecord.getSeekKey());
         topLevelDirectory.fNbytesName = 32 + 2 * fName.sizeOnDisk() + 2 * fTitle.sizeOnDisk();
         topLevelRecord.add(new WeirdExtraNameAndTitle(fName, fTitle));
@@ -82,7 +82,7 @@ public class TFile implements Closeable {
         tFile = new TString("TList");
         fName = new TString("StreamerInfo");
         fTitle = new TString("Doubly linked list");
-        seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN));
+        seekInfoRecord = new TKey(tFile, fName, fTitle, new Pointer(fBEGIN),true);
         fSeekInfo = seekInfoRecord.getSeekKey();
         TList<TStreamerInfo> list = new TList<>(streamerInfos.values());
         seekInfoRecord.add(list);
@@ -99,11 +99,7 @@ public class TFile implements Closeable {
         for (TKey record : dataRecords) {
             record.writeRecord(out);
         }
-        Map<String, TStreamerInfo> streamerInfosSave = streamerInfos;
-        // FIXME: Avoid concurrent modification exception while writing streamer infos
-        streamerInfos = new HashMap<>();
         seekInfoRecord.writeRecord(out);
-        streamerInfos = streamerInfosSave;
         fNbytesInfo.set(seekInfoRecord.size);
         seekKeysRecord.writeRecord(out);
         topLevelDirectory.fNbytesKeys = seekKeysRecord.size;
@@ -144,7 +140,7 @@ public class TFile implements Closeable {
             fName = new TString("string");
             fTitle = TString.empty();
         }
-        TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir);
+        TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir, false);
         record.add(object);
         dataRecords.add(record);
         topLevelDirectory.add(record);
@@ -208,6 +204,9 @@ public class TFile implements Closeable {
         private TDatime fDatimeC;
         private int keyLen;
         private int size;
+        // Indicates that classes written to this record should not cause
+        // streamer infos to be added to the file.
+        private boolean suppressStreamerInfo = false;
 
         /**
          * Create a new record.
@@ -217,11 +216,12 @@ public class TFile implements Closeable {
          * @param fTitle The title of the record
          * @param seekPDir A pointer to the parent directory
          */
-        TKey(TString className, TString fName, TString fTitle, Pointer seekPDir) {
+        TKey(TString className, TString fName, TString fTitle, Pointer seekPDir, boolean suppressStreamerInfo) {
             this.className = className;
             this.fName = fName;
             this.fTitle = fTitle;
             this.seekPDir = seekPDir;
+            this.suppressStreamerInfo = suppressStreamerInfo;
         }
 
         /**
@@ -238,8 +238,8 @@ public class TFile implements Closeable {
             long seekKey = out.getFilePointer();
             fSeekKey.set(seekKey);
             out.seek(seekKey + 18);
-            out.writeObject(fSeekKey);            // Pointer to record itself (consistency check)
-            out.writeObject(seekPDir);            // Pointer to directory header
+            out.writeObject(fSeekKey); // Pointer to record itself (consistency check)
+            out.writeObject(seekPDir); // Pointer to directory header
             out.writeObject(className);
             out.writeObject(fName);
             out.writeObject(fTitle);
@@ -247,7 +247,7 @@ public class TFile implements Closeable {
             keyLen = (int) (dataPos - seekKey);
             // Write all the objects associated with this record into a new DataBuffer
             // TODO: Is there any reason to buffer if we are not going to compress?
-            RootBufferedOutputStream buffer = new RootBufferedOutputStream(TFile.this, keyLen);
+            RootBufferedOutputStream buffer = new RootBufferedOutputStream(TFile.this, keyLen, suppressStreamerInfo);
             for (RootObject object : objects) {
                 buffer.writeObject(object);
             }
