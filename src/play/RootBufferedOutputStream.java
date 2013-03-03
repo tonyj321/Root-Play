@@ -88,7 +88,6 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
             StreamerClassInfo classInfo = StreamerUtilities.getClassInfo(c);
             Map<String, TStreamerInfo> streamerInfos = out.getStreamerInfos();
             if (streamerInfos != null && !classInfo.suppressStreamerInfo() && !streamerInfos.containsKey(classInfo.getName())) {
-                System.out.println("adding " + classInfo.getName());
                 streamerInfos.put(classInfo.getName(), StreamerUtilities.getStreamerInfo(c));
             }
             if (classInfo.hasStandardHeader()) {
@@ -141,7 +140,6 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
             out.write(className.getBytes());
             out.writeByte(0); // Null terminated
             out.getClassMap().put(className, address);
-            System.out.println(className + "=" + address);
         } else {
             out.writeInt(kClassMask | (address.intValue() + kMapOffset));
         }
