@@ -17,7 +17,7 @@ public class POJODemo {
         }
     }
 
-    private static class POJO {
+    public static class POJO {
 
         private int i = 25;
         private double d = 1234.567;

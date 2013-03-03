@@ -19,10 +19,13 @@ public class TDatime {
     private int fDatime;
 
     public TDatime() {
-        this(new Date());
+        this(null);
     }
 
     public TDatime(Date date) {
+        if (date==null) {
+            date = new Date();
+        }
         Calendar calendar = new GregorianCalendar();
         calendar.setTime(date);
         int year = calendar.get(Calendar.YEAR) - 1995;

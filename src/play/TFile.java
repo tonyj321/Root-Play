@@ -8,9 +8,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import play.annotations.ClassDef;
 import play.classes.TDatime;
 import play.classes.TString;
@@ -46,6 +48,9 @@ public class TFile implements Closeable {
     private final TKey seekInfoRecord;
     // Collection of TStreamerInfos to be written to the seekInfoRecord;
     private Map<String, TStreamerInfo> streamerInfos = new HashMap<>();
+    private static Date timeWarp;
+    private static UUID uuidWarp;
+    private static String nameWarp;
 
     /**
      * Open a new file for writing, or overwrite an existing file.
@@ -68,7 +73,7 @@ public class TFile implements Closeable {
     public TFile(File file) throws FileNotFoundException, IOException {
 
         out = new RootRandomAccessFile(file, this);
-        String fName = file.getName();
+        String fName = nameWarp == null ? file.getName() : nameWarp;
         String fTitle = "";
         topLevelRecord = new TKey("TFile", fName, fTitle, Pointer.ZERO, true);
         seekKeysRecord = new TKey("TFile", fName, fTitle, new Pointer(fBEGIN), true);
@@ -181,6 +186,22 @@ public class TFile implements Closeable {
     Map<String, TStreamerInfo> getStreamerInfos() {
         return streamerInfos;
     }
+    /**
+     * Just for testing, sets all timestamps, UUID's and filenames in the file
+     * to arbitrary fixed values, so that the file is reproducible.
+     * @param testMode <code>true</code> to set test mode
+     */
+    static void setTimeWarp(boolean testMode) {
+        if (testMode) {
+            timeWarp = new Date(1362336450390L);
+            uuidWarp = UUID.fromString("3e3260c7-303a-4ea9-83b9-f43c34c96908");
+            nameWarp= "timewarp.root";
+        } else {
+            timeWarp=null;
+            uuidWarp=null;
+            nameWarp=null;
+        }
+    }
 
     /**
      * A class representing a record within the root file.
@@ -230,7 +251,7 @@ public class TFile implements Closeable {
          */
         void writeRecord(RootRandomAccessFile out) throws IOException {
 
-            fDatimeC = new TDatime();
+            fDatimeC = new TDatime(timeWarp);
             long seekKey = out.getFilePointer();
             fSeekKey.set(seekKey);
             out.seek(seekKey + 18);
@@ -363,19 +384,18 @@ public class TFile implements Closeable {
         private Pointer fSeekDir;
         private Pointer fSeekParent;
         private Pointer fSeekKeys;
-        private static final int version = 5;
-        private TUUID fUUID = new TUUID();
+        private TUUID fUUID = new TUUID(uuidWarp);
         private TKeyList tList = new TKeyList();
 
         TDirectory(Pointer parent, Pointer self, Pointer keys) {
-            fDatimeC = fDatimeF = new TDatime();
+            fDatimeC = fDatimeF = new TDatime(timeWarp);
             fSeekDir = self;
             fSeekParent = parent;
             fSeekKeys = keys;
         }
 
         private void write(RootOutput out) throws IOException {
-            out.writeShort(version);
+            out.writeShort(TDirectory.class.getAnnotation(ClassDef.class).version());
             out.writeObject(fDatimeC);
             out.writeObject(fDatimeF);
             out.writeInt(fNbytesKeys);

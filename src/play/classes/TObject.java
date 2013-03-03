@@ -22,10 +22,9 @@ public class TObject {
     @Title("bit field status word")
     @FieldType(Type.kUInt)
     private int fBits = 0x03000000;
-    private static final int version = 1;
 
     private void write(RootOutput out) throws IOException {
-        out.writeShort(version);
+        out.writeShort(TObject.class.getAnnotation(ClassDef.class).version());
         out.writeInt(fUniqueID);
         out.writeInt(fBits);
     }

@@ -14,13 +14,19 @@ import play.annotations.ClassDef;
  */
 @ClassDef(version = 1, hasStandardHeader = false, suppressTStreamerInfo = true)
 public class TUUID {
-    private UUID uuid = UUID.randomUUID();
-    private static final int version = 1;
-
+    private UUID uuid;
+    
+    public TUUID() {
+        this(null);
+    }
+    
+    public TUUID(UUID uuid) {
+        this.uuid = uuid == null ? UUID.randomUUID() : uuid;
+    }
+    
     private void write(RootOutput out) throws IOException {
-        out.writeShort(version);
+        out.writeShort(TUUID.class.getAnnotation(ClassDef.class).version());
         out.writeLong(uuid.getMostSignificantBits());
         out.writeLong(uuid.getLeastSignificantBits());
     }
-    
 }
