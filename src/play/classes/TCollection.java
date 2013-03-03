@@ -7,7 +7,7 @@ import java.util.Iterator;
 import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
-import play.annotations.StreamerInfo;
+import play.annotations.Title;
 
 /**
  * Collection abstract base class.
@@ -16,11 +16,11 @@ import play.annotations.StreamerInfo;
  */
 @ClassDef(version = 3, checkSum = -1882108578, hasStandardHeader = false)
 public abstract class TCollection<A extends RootObject> extends TObject implements Iterable<A> {
-    @StreamerInfo(value = "name of the collection")
+    @Title("name of the collection")
     TString name = TString.empty();
-    @StreamerInfo(value = "number of elements in the collection")
+    @Title("number of elements in the collection")
     private int fSize;
-    Collection<A> list = new ArrayList<>();
+    transient Collection<A> list = new ArrayList<>();
 
     private void write(RootOutput out) throws IOException {
     }

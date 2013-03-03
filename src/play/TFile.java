@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import play.annotations.ClassDef;
 import play.classes.TDatime;
 import play.classes.TString;
@@ -133,21 +135,25 @@ public class TFile implements Closeable {
      *
      * @param object The object to be written to disk.
      */
-    public void add(RootObject object) {
-        TString className = new TString(Utilities.getClassInfo(object.getClass()).getName());
-        TString fName, fTitle;
-        if (object instanceof TNamed) {
-            TNamed tNamed = (TNamed) object;
-            fName = tNamed.getName();
-            fTitle = tNamed.getTitle();
-        } else {
-            fName = new TString("string");
-            fTitle = TString.empty();
+    public void add(RootObject object) throws IOException {
+        try {
+            TString className = new TString(StreamerUtilities.getClassInfo(object.getClass()).getName());
+            TString fName, fTitle;
+            if (object instanceof TNamed) {
+                TNamed tNamed = (TNamed) object;
+                fName = tNamed.getName();
+                fTitle = tNamed.getTitle();
+            } else {
+                fName = new TString("string");
+                fTitle = TString.empty();
+            }
+            TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir);
+            record.add(object);
+            dataRecords.add(record);
+            topLevelDirectory.add(record);
+        } catch (StreamerInfoException ex) {
+            throw new IOException("Error getting classinfo for object of class "+object.getClass(),ex);
         }
-        TKey record = new TKey(className, fName, fTitle, topLevelDirectory.fSeekDir);
-        record.add(object);
-        dataRecords.add(record);
-        topLevelDirectory.add(record);
     }
 
     /**

@@ -3,8 +3,11 @@ package play.classes.hist;
 import java.io.IOException;
 import play.RootOutput;
 import play.annotations.ClassDef;
-import play.annotations.StreamerInfo;
 import play.Type;
+import play.annotations.Counter;
+import play.annotations.FieldType;
+import play.annotations.Super;
+import play.annotations.Title;
 import play.classes.TArrayD;
 import play.classes.TList;
 import play.classes.TNamed;
@@ -12,58 +15,63 @@ import play.classes.TString;
 
 /**
  * The base histogram class.
+ *
  * @see <a href="http://root.cern.ch/root/htmldoc/TH1.html">TH1</a>
  * @author tonyj
  */
-@ClassDef(version = 6, checkSum = -381522971, title = "1-Dim histogram base class")
+@ClassDef(version = 6, checkSum = -381522971)
+@Title("1-Dim histogram base class")
 public class TH1 extends TNamed {
-    @StreamerInfo(value = "Line Attributes", type = Type.kBase)
-    private TAttLine tAttLine = new TAttLine();
-    @StreamerInfo(value = "Fill area Attributes", type = Type.kBase)
-    private TAttFill tAttFill = new TAttFill();
-    @StreamerInfo(value = "Marker Attributes", type = Type.kBase)
-    private TAttMarker tAttMarker = new TAttMarker();
-    @StreamerInfo(value = "number of bins(1D), cells (2D) +U/Overflows")
+
+    private @Super
+    TAttLine tAttLine = new TAttLine();
+    private @Super
+    TAttFill tAttFill = new TAttFill();
+    private @Super
+    TAttMarker tAttMarker = new TAttMarker();
+    @Title("number of bins(1D), cells (2D) +U/Overflows")
     private int fNcells;
-    @StreamerInfo(value = "X axis descriptor")
+    @Title("X axis descriptor")
     private TAxis fXaxis;
-    @StreamerInfo(value = "Y axis descriptor")
+    @Title("Y axis descriptor")
     private TAxis fYaxis;
-    @StreamerInfo(value = "Z axis descriptor")
+    @Title("Z axis descriptor")
     private TAxis fZaxis;
-    @StreamerInfo(value = "(1000*offset) for bar charts or legos")
+    @Title("(1000*offset) for bar charts or legos")
     private short fBarOffset = 0;
-    @StreamerInfo(value = "(1000*width) for bar charts or legos")
+    @Title("(1000*width) for bar charts or legos")
     private short fBarWidth = 1000;
-    @StreamerInfo(value = "Number of entries")
-     double fEntries = 0;
-    @StreamerInfo(value = "Total Sum of weights")
-     double fTsumw = 0;
-    @StreamerInfo(value = "Total Sum of squares of weights")
-     double fTsumw2 = 0;
-    @StreamerInfo(value = "Total Sum of weight*X")
-     double fTsumwx = 0;
-    @StreamerInfo(value = "Total Sum of weight*X*X")
-     double fTsumwx2 = 0;
-    @StreamerInfo(value = "Maximum value for plotting")
+    @Title("Number of entries")
+    double fEntries = 0;
+    @Title("Total Sum of weights")
+    double fTsumw = 0;
+    @Title("Total Sum of squares of weights")
+    double fTsumw2 = 0;
+    @Title("Total Sum of weight*X")
+    double fTsumwx = 0;
+    @Title("Total Sum of weight*X*X")
+    double fTsumwx2 = 0;
+    @Title("Maximum value for plotting")
     private double fMaximum = -1111;
-    @StreamerInfo(value = "Minimum value for plotting")
+    @Title("Minimum value for plotting")
     private double fMinimum = -1111;
-    @StreamerInfo(value = "Normalization factor")
+    @Title("Normalization factor")
     private double fNormFactor = 0;
-    @StreamerInfo(value = "Array to display contour levels")
+    @Title("Array to display contour levels")
     private TArrayD fContour;
-    @StreamerInfo(value = "Array of sum of squares of weights")
+    @Title("Array of sum of squares of weights")
     private TArrayD fSumw2;
-    @StreamerInfo(value = "histogram options")
+    @Title("histogram options")
     private TString fOption = TString.empty();
-    @StreamerInfo(value = "Pointer to list of functions (fits and user)", type = Type.kObjectp)
+    @Title("Pointer to list of functions (fits and user)")
+    @FieldType(value = Type.kObjectp)
     private TList fFunctions = new TList();
-    @StreamerInfo(value = "fBuffer size")
+    @Title("fBuffer size")
     private int fBufferSize = 0;
-    @StreamerInfo(value = "entry buffer", counter = "fBufferSize")
+    @Title("entry buffer")
+    @Counter("fBufferSize")
     private double[] fBuffer = null;
-    private EBinErrorOpt fBinStatErrOpt = EBinErrorOpt.kNormal;
+    private transient EBinErrorOpt fBinStatErrOpt = EBinErrorOpt.kNormal;
 
     private enum EBinErrorOpt {
 
@@ -128,5 +136,4 @@ public class TH1 extends TNamed {
     public void setSumx2(double fTsumx2) {
         this.fTsumwx2 = fTsumx2;
     }
-    
 }

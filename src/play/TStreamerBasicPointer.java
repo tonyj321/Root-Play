@@ -1,10 +1,8 @@
 package play;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import play.RootOutput;
 import play.annotations.ClassDef;
-import play.annotations.StreamerInfo;
+import play.annotations.Title;
 import play.classes.TString;
 
 /**
@@ -14,19 +12,18 @@ import play.classes.TString;
 @ClassDef(version=2)
 class TStreamerBasicPointer extends TStreamerElement {
 
-    @StreamerInfo("version number of the class with the counter")
+    @Title("version number of the class with the counter")
     private int      fCountVersion;
-    @StreamerInfo("name of data member holding the array count")
+    @Title("name of data member holding the array count")
     private TString  fCountName;
-    @StreamerInfo("name of the class with the counter")
+    @Title("name of the class with the counter")
     private TString  fCountClass;
    
-    TStreamerBasicPointer(Field f, StreamerInfo i, Type type, int size, TString name, 
-            TString countName, TString countClass, int countVersion) {
-        super(f, i, type, size, name);
-        fCountName = countName;
-        fCountClass = countClass;
-        fCountVersion = countVersion;
+    TStreamerBasicPointer(StreamerFieldInfo field) {
+        super(field);
+        fCountName = new TString(field.getCountName());
+        fCountClass = new TString(field.getCountClass());
+        fCountVersion = field.getCountVersion();
     }
 
     private void write(RootOutput out) throws IOException {

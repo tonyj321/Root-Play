@@ -4,38 +4,38 @@ import java.io.IOException;
 import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
-import play.annotations.StreamerInfo;
+import play.annotations.Title;
 
 /**
  * Manages histogram axis attributes. 
  * @see <a href="http://root.cern.ch/root/htmldoc/TAttAxis.html">TAttAxis</a>
  * @author tonyj
  */
-@ClassDef(version = 4, checkSum = 1395276684, title = "Axis Attributes")
+@ClassDef(version = 4, checkSum = 1395276684)
+@Title("Axis Attributes")
 public class TAttAxis implements RootObject {
-    @StreamerInfo(value = "Number of divisions(10000*n3 + 100*n2 + n1)")
+    @Title("Number of divisions(10000*n3 + 100*n2 + n1)")
     private int fNdivisions = 510;
-    @StreamerInfo(value = "color of the line axis")
+    @Title("color of the line axis")
     private short fAxisColor = 1;
-    @StreamerInfo(value = "color of labels")
+    @Title("color of labels")
     private short fLabelColor = 1;
-    @StreamerInfo(value = "font for labels")
+    @Title("font for labels")
     private short fLabelFont = 62;
-    @StreamerInfo(value = "offset of labels")
+    @Title("offset of labels")
     private float fLabelOffset = 0.005f;
-    @StreamerInfo(value = "size of labels")
+    @Title("size of labels")
     private float fLabelSize = 0.04f;
-    @StreamerInfo(value = "length of tick marks")
+    @Title("length of tick marks")
     private float fTickLength = 0.03f;
-    @StreamerInfo(value = "offset of axis title")
+    @Title("offset of axis title")
     private float fTitleOffset = 1.0f;
-    @StreamerInfo(value = "size of axis title")
+    @Title("size of axis title")
     private float fTitleSize = 0.04f;
-    @StreamerInfo(value = "color of axis title")
+    @Title("color of axis title")
     private short fTitleColor = 1;
-    @StreamerInfo(value = "font for axis title")
+    @Title("font for axis title")
     private short fTitleFont = 62;
-    private static final int version = 4;
 
     private void write(RootOutput out) throws IOException {
         out.writeInt(fNdivisions);

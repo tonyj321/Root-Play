@@ -17,10 +17,6 @@ public @interface ClassDef {
      * of the implementing Java class. 
      */
     String className() default ""; 
-    /**
-     * The title for this class. Defaults to empty.
-     */
-    String title() default ""; 
     /** The version of this class. Defaults to 0. 
      */
     int version() default 0;

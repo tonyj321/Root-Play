@@ -3,8 +3,10 @@ package play.classes.hist;
 import java.io.IOException;
 import play.RootOutput;
 import play.annotations.ClassDef;
-import play.annotations.StreamerInfo;
 import play.Type;
+import play.annotations.FieldType;
+import play.annotations.Super;
+import play.annotations.Title;
 import play.classes.TArrayD;
 import play.classes.THashList;
 import play.classes.TNamed;
@@ -19,27 +21,28 @@ import play.classes.TString;
 @ClassDef(version = 9, checkSum = 2116140609)
 public class TAxis extends TNamed {
 
-    @StreamerInfo(value = "Axis Attributes", type = Type.kBase)
-    private TAttAxis tAttAxis = new TAttAxis();
-    @StreamerInfo(value = "Number of bins")
+    private @Super TAttAxis tAttAxis = new TAttAxis();
+    @Title("Number of bins")
     int fNbins;
-    @StreamerInfo(value = "low edge of first bin")
+    @Title("low edge of first bin")
     double fXmin;
-    @StreamerInfo(value = "upper edge of last bin")
+    @Title("upper edge of last bin")
     double fXmax;
-    @StreamerInfo(value = "Bin edges array in X")
+    @Title("Bin edges array in X")
     private TArrayD fXbins;
-    @StreamerInfo(value = "first bin to display")
+    @Title("first bin to display")
     private int fFirst = 0;
-    @StreamerInfo(value = "last bin to display")
+    @Title("last bin to display")
     private int fLast = 0;
-    @StreamerInfo(value = "second bit status word", type = Type.kUShort)
+    @Title("second bit status word")
+    @FieldType(value = Type.kUShort)
     private short fBits2 = 0;
-    @StreamerInfo(value = "on/off displaying time values instead of numerics")
+    @Title("on/off displaying time values instead of numerics")
     private boolean fTimeDisplay = false;
-    @StreamerInfo(value = "Date&time format, ex: 09/12/99 12:34:00")
+    @Title("Date&time format, ex: 09/12/99 12:34:00")
     private TString fTimeFormat;
-    @StreamerInfo(value = "List of labels", type = Type.kObjectP)
+    @Title("List of labels")
+    @FieldType(value = Type.kObjectP)
     private THashList fLabels;
 
     TAxis(TString name, int nBins, double xMin, double xMax) {

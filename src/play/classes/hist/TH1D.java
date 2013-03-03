@@ -3,8 +3,7 @@ package play.classes.hist;
 import java.io.IOException;
 import play.RootOutput;
 import play.annotations.ClassDef;
-import play.annotations.StreamerInfo;
-import play.Type;
+import play.annotations.Super;
 import play.classes.TArrayD;
 import play.classes.TString;
 
@@ -15,8 +14,7 @@ import play.classes.TString;
  */
 @ClassDef(version = 1)
 public class TH1D extends TH1 {
-    @StreamerInfo(value = "Array of doubles", type = Type.kBase)
-    private TArrayD array;
+    private @Super TArrayD array;
 
     public TH1D(TString name, int nBins, double xMin, double xMax, double[] data) {
         super(name, nBins, xMin, xMax);

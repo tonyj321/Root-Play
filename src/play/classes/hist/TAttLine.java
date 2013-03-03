@@ -4,22 +4,22 @@ import java.io.IOException;
 import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
-import play.annotations.StreamerInfo;
+import play.annotations.Title;
 
 /**
  * Line Attributes class.
  * <a href="http://root.cern.ch/root/htmldoc/TAttLine.html">TAttLine</a>
  * @author tonyj
  */
-@ClassDef(version = 1, checkSum = 1369587346, title = "Line Attributes")
+@ClassDef(version = 1, checkSum = 1369587346)
+@Title("Line Attributes")
 public class TAttLine implements RootObject {
-    @StreamerInfo(value = "line color")
+    @Title("line color")
     private short fLineColor = 1;
-    @StreamerInfo(value = "line style")
+    @Title("line style")
     private short fLineStyle = 1;
-    @StreamerInfo(value = "line width")
+    @Title("line width")
     private short fLineWidth = 1;
-    private static final int version = 1;
 
     private void write(RootOutput out) throws IOException {
         out.writeShort(fLineColor);
