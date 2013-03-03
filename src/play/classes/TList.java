@@ -2,7 +2,6 @@ package play.classes;
 
 import java.io.IOException;
 import java.util.Collection;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 
@@ -12,7 +11,7 @@ import play.annotations.ClassDef;
  * @author tonyj
  */
 @ClassDef(version = 5)
-public class TList<A extends RootObject> extends TSeqCollection<A> implements RootObject {
+public class TList<A> extends TSeqCollection<A> {
 
     /**
      * Creates a TList backed by a java.util.Collection;
@@ -31,7 +30,7 @@ public class TList<A extends RootObject> extends TSeqCollection<A> implements Ro
     private void write(RootOutput out) throws IOException {
         out.writeObject(name);
         out.writeInt(list.size());
-        for (RootObject o : list) {
+        for (Object o : list) {
             out.writeObjectRef(o);
             out.writeByte(0);
         }

@@ -22,7 +22,7 @@ class RootRandomAccessFile extends RandomAccessFile implements RootOutputNonPubl
     }
 
     @Override
-    public void writeObject(RootObject o) throws IOException {
+    public void writeObject(Object o) throws IOException {
         RootBufferedOutputStream.writeObject(this, o);
     }
 
@@ -32,7 +32,7 @@ class RootRandomAccessFile extends RandomAccessFile implements RootOutputNonPubl
     }
 
     @Override
-    public void writeObjectRef(RootObject o) throws IOException {
+    public void writeObjectRef(Object o) throws IOException {
         RootBufferedOutputStream.writeObjectRef(this, o);
     }
 

@@ -1,7 +1,6 @@
 package play.classes;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 
@@ -11,7 +10,7 @@ import play.annotations.ClassDef;
  * @author tonyj
  */
 @ClassDef(version = 0, checkSum = -677769907, hasStandardHeader = false)
-public class TSeqCollection<A extends RootObject> extends TCollection<A> {
+public class TSeqCollection<A> extends TCollection<A> {
 
     private void write(RootOutput out) throws IOException {
     }

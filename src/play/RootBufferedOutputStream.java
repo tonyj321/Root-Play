@@ -37,12 +37,12 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
     }
 
     @Override
-    public void writeObject(RootObject o) throws IOException {
+    public void writeObject(Object o) throws IOException {
         writeObject(this, o);
     }
 
     @Override
-    public void writeObjectRef(RootObject o) throws IOException {
+    public void writeObjectRef(Object o) throws IOException {
         writeObjectRef(this, o);
     }
 
@@ -75,7 +75,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         return suppressStreamerInfo ? null : tFile.getStreamerInfos();
     }
 
-    static void writeObject(RootOutputNonPublic out, RootObject o) throws IOException {
+    static void writeObject(RootOutputNonPublic out, Object o) throws IOException {
         if (o == null) {
             out.writeInt(0);
         } else {
@@ -83,7 +83,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         }
     }
 
-    static void writeObject(RootOutputNonPublic out, RootObject o, Class c) throws IOException {
+    static void writeObject(RootOutputNonPublic out, Object o, Class c) throws IOException {
         try {
             StreamerClassInfo classInfo = StreamerUtilities.getClassInfo(c);
             Map<String, TStreamerInfo> streamerInfos = out.getStreamerInfos();
@@ -92,12 +92,11 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
                 streamerInfos.put(classInfo.getName(), StreamerUtilities.getStreamerInfo(c));
             }
             if (classInfo.hasStandardHeader()) {
-
                 long objectPointer = out.getFilePointer();
                 out.writeInt(0); // space for length
                 out.writeShort(classInfo.getVersion());
                 Class sc = c.getSuperclass();
-                if (RootObject.class.isAssignableFrom(sc)) {
+                if (sc != Object.class) {
                     writeObject(out, o, sc);
                 }
                 Method m = c.getDeclaredMethod("write", RootOutput.class);
@@ -109,7 +108,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
                 out.seek(end);
             } else {
                 Class sc = c.getSuperclass();
-                if (RootObject.class.isAssignableFrom(sc)) {
+                if (sc != Object.class) {
                     writeObject(out, o, sc);
                 }
                 Method m = c.getDeclaredMethod("write", RootOutput.class);
@@ -121,7 +120,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         }
     }
 
-    static void writeObjectRef(RootOutputNonPublic out, RootObject o) throws IOException {
+    static void writeObjectRef(RootOutputNonPublic out, Object o) throws IOException {
         if (o == null) {
             out.write(0);
         } else {
@@ -129,7 +128,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         }
     }
 
-    static void writeObjectRef(RootOutputNonPublic out, RootObject o, Class c) throws IOException {
+    static void writeObjectRef(RootOutputNonPublic out, Object o, Class c) throws IOException {
 
         long objectPointer = out.getFilePointer();
         out.writeInt(0); // Space for length

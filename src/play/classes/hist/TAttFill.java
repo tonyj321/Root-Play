@@ -1,7 +1,6 @@
 package play.classes.hist;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.Title;
@@ -13,7 +12,7 @@ import play.annotations.Title;
  */
 @ClassDef(version = 1, checkSum = 1204118360)
 @Title("Fill Area Attributes")
-public class TAttFill implements RootObject {
+public class TAttFill {
     @Title("fill area color")
     private short fFillColor = 0;
     @Title("fill area style")

@@ -1,7 +1,6 @@
 package play.classes;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 
@@ -11,14 +10,14 @@ import play.annotations.ClassDef;
  * @author tonyj
  */
 @ClassDef(version = 3)
-public class TObjArray<A extends RootObject> extends TSeqCollection<A> implements RootObject {
+public class TObjArray<A> extends TSeqCollection<A> {
     private int fLowerBound = 0;
 
     private void write(RootOutput out) throws IOException {
         out.writeObject(name);
         out.writeInt(list.size());
         out.writeInt(fLowerBound);
-        for (RootObject o : list) {
+        for (Object o : list) {
             out.writeObjectRef(o);
         }
     }

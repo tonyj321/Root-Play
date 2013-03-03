@@ -1,7 +1,6 @@
 package play.classes.hist;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.Title;
@@ -13,7 +12,7 @@ import play.annotations.Title;
  */
 @ClassDef(version = 4, checkSum = 1395276684)
 @Title("Axis Attributes")
-public class TAttAxis implements RootObject {
+public class TAttAxis {
     @Title("Number of divisions(10000*n3 + 100*n2 + n1)")
     private int fNdivisions = 510;
     @Title("color of the line axis")

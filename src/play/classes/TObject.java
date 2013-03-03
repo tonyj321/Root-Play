@@ -1,7 +1,6 @@
 package play.classes;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.Type;
 import play.annotations.ClassDef;
@@ -15,7 +14,7 @@ import play.annotations.Title;
  */
 @ClassDef(version = 1, checkSum = 1389979441, hasStandardHeader = false)
 @Title("Basic ROOT object")
-public class TObject implements RootObject {
+public class TObject {
     
     @Title("object unique identifier")
     @FieldType(Type.kUInt)

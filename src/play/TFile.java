@@ -129,7 +129,7 @@ public class TFile implements Closeable {
      *
      * @param object The object to be written to disk.
      */
-    public void add(RootObject object) throws IOException {
+    public void add(Object object) throws IOException {
         TString className = new TString(StreamerUtilities.getClassInfo(object.getClass()).getName());
         TString fName, fTitle;
         if (object instanceof TNamed) {
@@ -190,7 +190,7 @@ public class TFile implements Closeable {
      * A class representing a record within the root file.
      */
     @ClassDef(version = 0, hasStandardHeader = false)
-    private class TKey implements RootObject {
+    private class TKey {
 
         private TString className;
         private TString fName;
@@ -199,7 +199,7 @@ public class TFile implements Closeable {
         private final static int cycle = 1;
         private Pointer seekPDir;
         private Pointer fSeekKey = new Pointer(0);
-        private List<RootObject> objects = new ArrayList<>();
+        private List<Object> objects = new ArrayList<>();
         private int objLen;
         private TDatime fDatimeC;
         private int keyLen;
@@ -248,7 +248,7 @@ public class TFile implements Closeable {
             // Write all the objects associated with this record into a new DataBuffer
             // TODO: Is there any reason to buffer if we are not going to compress?
             RootBufferedOutputStream buffer = new RootBufferedOutputStream(TFile.this, keyLen, suppressStreamerInfo);
-            for (RootObject object : objects) {
+            for (Object object : objects) {
                 buffer.writeObject(object);
             }
             buffer.close();
@@ -283,7 +283,7 @@ public class TFile implements Closeable {
          *
          * @param object The object to be stored in the record
          */
-        private void add(RootObject object) {
+        private void add(Object object) {
             objects.add(object);
         }
 
@@ -315,7 +315,7 @@ public class TFile implements Closeable {
      * integer.
      */
     @ClassDef(hasStandardHeader = false, suppressTStreamerInfo = true)
-    static class Pointer implements RootObject {
+    static class Pointer {
 
         private long value;
         private final boolean immutable;
@@ -358,7 +358,7 @@ public class TFile implements Closeable {
      * subdirectories within the file.
      */
     @ClassDef(version = 5, hasStandardHeader = false, suppressTStreamerInfo = true)
-    private static class TDirectory implements RootObject {
+    private static class TDirectory {
 
         private TDatime fDatimeC;
         private TDatime fDatimeF;
@@ -404,14 +404,14 @@ public class TFile implements Closeable {
         }
     }
 
-    @ClassDef(version = 0, hasStandardHeader = false)
-    private static class TKeyList implements RootObject {
+    @ClassDef(hasStandardHeader = false)
+    private static class TKeyList {
 
-        private List<RootObject> list = new ArrayList<>();
+        private List<Object> list = new ArrayList<>();
 
         private void write(RootOutput out) throws IOException {
             out.writeInt(list.size());
-            for (RootObject o : list) {
+            for (Object o : list) {
                 out.writeObject(o);
             }
         }
@@ -421,8 +421,8 @@ public class TFile implements Closeable {
         }
     }
 
-    @ClassDef(version = 0, hasStandardHeader = false, suppressTStreamerInfo = true)
-    private static class WeirdExtraNameAndTitle implements RootObject {
+    @ClassDef(hasStandardHeader = false, suppressTStreamerInfo = true)
+    private static class WeirdExtraNameAndTitle {
 
         private final TString fName;
         private final TString fTitle;

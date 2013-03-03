@@ -1,7 +1,6 @@
 package play.classes;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 
@@ -12,7 +11,7 @@ import play.annotations.ClassDef;
  * @author tonyj
  */
 @ClassDef(version = 0, hasStandardHeader = false)
-public class TString implements RootObject {
+public class TString {
     private transient String string;
     static final TString empty = new TString("");
 

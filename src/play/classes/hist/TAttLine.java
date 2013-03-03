@@ -1,7 +1,6 @@
 package play.classes.hist;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.Title;
@@ -13,7 +12,7 @@ import play.annotations.Title;
  */
 @ClassDef(version = 1, checkSum = 1369587346)
 @Title("Line Attributes")
-public class TAttLine implements RootObject {
+public class TAttLine {
     @Title("line color")
     private short fLineColor = 1;
     @Title("line style")

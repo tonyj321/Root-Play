@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 
@@ -16,7 +15,7 @@ import play.annotations.ClassDef;
  * @author tonyj
  */
 @ClassDef(hasStandardHeader=false, suppressTStreamerInfo = true)
-public class TDatime implements RootObject {
+public class TDatime {
     private int fDatime;
 
     public TDatime() {

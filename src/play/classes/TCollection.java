@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.Title;
@@ -15,7 +14,7 @@ import play.annotations.Title;
  * @author tonyj
  */
 @ClassDef(version = 3, checkSum = -1882108578, hasStandardHeader = false)
-public abstract class TCollection<A extends RootObject> extends TObject implements Iterable<A> {
+public abstract class TCollection<A> extends TObject implements Iterable<A> {
     @Title("name of the collection")
     TString name = TString.empty();
     @Title("number of elements in the collection")

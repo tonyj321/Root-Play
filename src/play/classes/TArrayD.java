@@ -1,7 +1,6 @@
 package play.classes;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.Title;
@@ -13,7 +12,7 @@ import play.annotations.Title;
  */
 @ClassDef(version = 1, hasStandardHeader = false, suppressTStreamerInfo = true)
 @Title("Array of doubles")
-public class TArrayD implements RootObject {
+public class TArrayD {
     private double[] fArray;
 
     public TArrayD(double[] array) {

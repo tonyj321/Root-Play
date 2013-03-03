@@ -1,7 +1,6 @@
 package play.classes.hist;
 
 import java.io.IOException;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.Title;
@@ -13,7 +12,7 @@ import play.annotations.Title;
  */
 @ClassDef(version = 2, checkSum = -87219836)
 @Title("Marker Attributes")
-public class TAttMarker implements RootObject {
+public class TAttMarker {
     @Title("Marker color index")
     private short fMarkerColor = 1;
     @Title("Marker style")

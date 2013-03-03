@@ -2,7 +2,6 @@ package play.classes;
 
 import java.io.IOException;
 import java.util.UUID;
-import play.RootObject;
 import play.RootOutput;
 import play.annotations.ClassDef;
 
@@ -14,7 +13,7 @@ import play.annotations.ClassDef;
  * @see <a href="http://root.cern.ch/root/htmldoc/TUUID.html">TUUID</a>
  */
 @ClassDef(version = 1, hasStandardHeader = false, suppressTStreamerInfo = true)
-public class TUUID implements RootObject {
+public class TUUID {
     private UUID uuid = UUID.randomUUID();
     private static final int version = 1;
 

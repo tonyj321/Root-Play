@@ -9,8 +9,8 @@ import java.io.IOException;
  */
 public interface RootOutput extends  DataOutput {
 
-    void writeObject(RootObject o) throws IOException;
-    void writeObjectRef(RootObject o) throws IOException;
+    void writeObject(Object o) throws IOException;
+    void writeObjectRef(Object o) throws IOException;
     /**
      * Test if pointers should be written as 32 or 64 bit integers.
      * @return <code>true</code> if should use 64 bit pointers.
