@@ -8,8 +8,8 @@ import play.classes.TObject;
 import play.classes.TString;
 
 /**
- * Used to mark the type of fields within a RootObject.
- * @see play.annotations.StreamerInfo
+ * Used to mark the type of fields within a Object.
+ * @see play.annotations.FieldType
  * @author tonyj
  */
 public enum Type {

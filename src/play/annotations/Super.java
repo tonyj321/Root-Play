@@ -7,8 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * Marks fields which should be considered as super classes as far as Root
- * streamer infos are concerned. Root supports multiple inheritance (and uses massively).
- * This is mapped in Java to a single base class plus fields representing the other super
+ * TSTreamerInfo are concerned. Root supports multiple inheritance (and uses it massively).
+ * This is mapped in Java to a single super class plus fields representing the other super
  * classes.
  * @author tonyj
  */

@@ -10,7 +10,7 @@ import play.annotations.Title;
 
 /**
  * Collection abstract base class.
- * @see <a href="http://root.cern.ch/root/htmldoc/TCollection.html"></a>
+ * @see <a href="http://root.cern.ch/root/htmldoc/TCollection.html">TCollection</a>
  * @author tonyj
  */
 @ClassDef(version = 3, checkSum = -1882108578, hasStandardHeader = false)

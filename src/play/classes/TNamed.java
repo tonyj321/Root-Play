@@ -7,7 +7,7 @@ import play.annotations.Title;
 
 /**
  * The TNamed class is the base class for all named ROOT classes.
- * <a href="http://root.cern.ch/root/htmldoc/TNamed.html">TNamed</a>
+ * @see <a href="http://root.cern.ch/root/htmldoc/TNamed.html">TNamed</a>
  * @author tonyj
  */
 @ClassDef(version = 1, checkSum = -68599943)
