@@ -2,6 +2,7 @@ package play;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedInputStream;
@@ -18,21 +19,25 @@ public class POJOTest {
     @Test
     public void test1() throws IOException {
 
-       TFile.setTimeWarp(true);
-       File tmp = File.createTempFile("pojo", "root");
+        TFile.setTimeWarp(true);
+        File tmp = File.createTempFile("pojo", "root");
         tmp.deleteOnExit();
         try (TFile file = new TFile(tmp)) {
             file.add(new POJODemo.POJO());
         }
-        try (CheckedInputStream in = new CheckedInputStream(new FileInputStream(tmp), new Adler32())) {
+        assertEquals(3428885616L, computeChecksum(tmp));
+    }
+
+    static long computeChecksum(File file) throws FileNotFoundException, IOException {
+        try (CheckedInputStream in = new CheckedInputStream(new FileInputStream(file), new Adler32())) {
             byte[] buffer = new byte[4096];
             for (;;) {
                 int l = in.read(buffer);
-                if (l<0) {
+                if (l < 0) {
                     break;
                 }
             }
-            assertEquals(3428885616L,in.getChecksum().getValue());
+            return in.getChecksum().getValue();
         }
     }
 }
