@@ -95,29 +95,35 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
             if (streamerInfos != null && !classInfo.suppressStreamerInfo() && !streamerInfos.containsKey(classInfo.getName())) {
                 streamerInfos.put(classInfo.getName(), StreamerUtilities.getStreamerInfo(c));
             }
-            if (classInfo.hasStandardHeader()) {
-                long objectPointer = out.getFilePointer();
-                out.writeInt(0); // space for length
-                out.writeShort(classInfo.getVersion());
-                Class sc = c.getSuperclass();
-                if (sc != Object.class) {
-                    writeObject(out, o, sc);
-                }
-                Method m = c.getDeclaredMethod("write", RootOutput.class);
+            try {
+                Method m = c.getDeclaredMethod("streamer", RootOutput.class);
                 m.setAccessible(true);
                 m.invoke(o, out);
-                long end = out.getFilePointer();
-                out.seek(objectPointer);
-                out.writeInt(kByteCountMask | (int) (end - objectPointer - 4));
-                out.seek(end);
-            } else {
-                Class sc = c.getSuperclass();
-                if (sc != Object.class) {
-                    writeObject(out, o, sc);
+            } catch (NoSuchMethodException x) {
+                if (classInfo.hasStandardHeader()) {
+                    long objectPointer = out.getFilePointer();
+                    out.writeInt(0); // space for length
+                    out.writeShort(classInfo.getVersion());
+                    Class sc = c.getSuperclass();
+                    if (sc != Object.class) {
+                        writeObject(out, o, sc);
+                    }
+                    Method m = c.getDeclaredMethod("write", RootOutput.class);
+                    m.setAccessible(true);
+                    m.invoke(o, out);
+                    long end = out.getFilePointer();
+                    out.seek(objectPointer);
+                    out.writeInt(kByteCountMask | (int) (end - objectPointer - 4));
+                    out.seek(end);
+                } else {
+                    Class sc = c.getSuperclass();
+                    if (sc != Object.class) {
+                        writeObject(out, o, sc);
+                    }
+                    Method m = c.getDeclaredMethod("write", RootOutput.class);
+                    m.setAccessible(true);
+                    m.invoke(o, out);
                 }
-                Method m = c.getDeclaredMethod("write", RootOutput.class);
-                m.setAccessible(true);
-                m.invoke(o, out);
             }
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | StreamerInfoException ex) {
             throw new IOException("Problem writing object of class " + c.getName(), ex);

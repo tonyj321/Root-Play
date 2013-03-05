@@ -5,15 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import play.annotations.ClassDef;
 import play.classes.TDatime;
+import play.classes.TNamed;
 
 /**
  * A class representing a record within the root file.
  */
 @ClassDef(hasStandardHeader = false)
-class TKey {
+class TKey extends TNamed {
     private String className;
-    private String fName;
-    private String fTitle;
     private static final int keyVersion = 4;
     private static final int cycle = 1;
     private Pointer seekPDir;
@@ -37,10 +36,9 @@ class TKey {
      * @param seekPDir A pointer to the parent directory
      */
     TKey(TFile tFile, String className, String fName, String fTitle, Pointer seekPDir, boolean suppressStreamerInfo) {
+        super(fName,fTitle);
         this.tFile = tFile;
         this.className = className;
-        this.fName = fName;
-        this.fTitle = fTitle;
         this.seekPDir = seekPDir;
         this.suppressStreamerInfo = suppressStreamerInfo;
     }
@@ -61,8 +59,8 @@ class TKey {
         out.writeObject(fSeekKey); // Pointer to record itself (consistency check)
         out.writeObject(seekPDir); // Pointer to directory header
         out.writeObject(className);
-        out.writeObject(fName);
-        out.writeObject(fTitle);
+        out.writeObject(getName());
+        out.writeObject(getTitle());
         long dataPos = out.getFilePointer();
         keyLen = (int) (dataPos - seekKey);
         // Write all the objects associated with this record into a new DataBuffer
@@ -114,7 +112,7 @@ class TKey {
      * @param out
      * @throws IOException
      */
-    private void write(RootOutput out) throws IOException {
+    void streamer(RootOutput out) throws IOException {
         out.writeInt(size);
         out.writeShort(keyVersion);
         out.writeInt(objLen);
@@ -124,8 +122,8 @@ class TKey {
         out.writeObject(fSeekKey);
         out.writeObject(seekPDir);
         out.writeObject(className);
-        out.writeObject(fName);
-        out.writeObject(fTitle);
+        out.writeObject(getName());
+        out.writeObject(getTitle());
     }
     
 }

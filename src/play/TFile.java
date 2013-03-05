@@ -5,12 +5,13 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import play.annotations.ClassDef;
-import play.classes.TString;
 
 /**
  * Top level class for interacting with a Root file. Currently this
@@ -34,15 +35,14 @@ public class TFile extends TDirectory implements Closeable {
     private int fCompress = 0;
     private Pointer fSeekInfo;
     private Pointer fNbytesInfo = new Pointer(0);
-    // This is the record that is always written at fBEGIN
-    private final TKey topLevelRecord;
-    // This is the record that is written at fSeekKeys
-    private final TKey seekKeysRecord;
     // This is the record that is written at fSeekInfo
     private final TKey seekInfoRecord;
     // Collection of TStreamerInfos to be written to the seekInfoRecord;
     private Map<String, TStreamerInfo> streamerInfos = new HashMap<>();
     private static String nameWarp;
+    // We don't really need two lists, this is just to keep the tests happy.
+    private final List<TKey> dataRecords = new ArrayList<>();
+    private final List<TKey> keyRecords = new ArrayList<>();
 
     /**
      * Open a new file for writing, or overwrite an existing file.
@@ -64,18 +64,9 @@ public class TFile extends TDirectory implements Closeable {
      */
     public TFile(File file) throws FileNotFoundException, IOException {
 
-        super(new Pointer(fBEGIN));
+        super(nameWarp == null ? file.getName() : nameWarp, "", new Pointer(fBEGIN), Pointer.ZERO);
+        addOwnRecords(this);
         out = new RootRandomAccessFile(file, this);
-        String fName = nameWarp == null ? file.getName() : nameWarp;
-        String fTitle = "";
-        topLevelRecord = new TKey(this, "TFile", fName, fTitle, Pointer.ZERO, true);
-        seekKeysRecord = new TKey(this, "TFile", fName, fTitle, new Pointer(fBEGIN), true);
-        fSeekKeys = seekKeysRecord.getSeekKey();
-        fNbytesName = 32 + 2 * TString.sizeOnDisk(fName) + 2 * TString.sizeOnDisk(fTitle);
-        topLevelRecord.add(new WeirdExtraNameAndTitle(fName, fTitle));
-        topLevelRecord.add(this);
-        seekKeysRecord.add(getKeyList());
-
         seekInfoRecord = new TKey(this, "TList", "StreamerInfo", "Doubly linked list", new Pointer(fBEGIN), true);
         fSeekInfo = seekInfoRecord.getSeekKey();
         TList<TStreamerInfo> list = new TList<>(streamerInfos.values());
@@ -83,24 +74,25 @@ public class TFile extends TDirectory implements Closeable {
     }
 
     /**
-     * Flush any uncommitted data to disk.
+     * Flush any uncommitted data to disk. Currently we do not keep of objects
+     * already committed, so we flush everything to disk.
      *
      * @throws IOException
      */
     public void flush() throws IOException {
         out.seek(fBEGIN);
-        topLevelRecord.writeRecord(out);
         for (TKey record : dataRecords) {
             record.writeRecord(out);
         }
         seekInfoRecord.writeRecord(out);
         fNbytesInfo.set(seekInfoRecord.size);
-        seekKeysRecord.writeRecord(out);
-        fNbytesKeys = seekKeysRecord.size;
+        for (TKey record : keyRecords) {
+            record.writeRecord(out);
+        }
         fEND.set(out.getFilePointer());
         // Rewrite topLevelRecord to get updated fSeekKey pointer
         out.seek(fBEGIN);
-        topLevelRecord.writeRecord(out);
+        dataRecords.get(0).writeRecord(out);
         // Finally write the header
         writeHeader();
     }
@@ -156,13 +148,25 @@ public class TFile extends TDirectory implements Closeable {
         return streamerInfos;
     }
 
+    TKey addRecord(String className, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
+        TKey tKey = new TKey(this, className, fName, fTitle, fSeekDir, suppressStreamerInfo);
+        dataRecords.add(tKey); 
+        return tKey;
+    }
+
+    TKey addKeyListRecord(String className, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
+        TKey tKey = new TKey(this, className, fName, fTitle, fSeekDir, suppressStreamerInfo);
+        keyRecords.add(tKey); 
+        return tKey;
+    }
+    
     /**
      * Just for testing, sets all timestamps, UUID's and filenames in the file
      * to arbitrary fixed values, so that the file is reproducible.
      *
      * @param testMode <code>true</code> to set test mode
      */
-    static void setTimeWarp(boolean testMode) {
+    public static void setTimeWarp(boolean testMode) {
         if (testMode) {
             timeWarp = new Date(1362336450390L);
             uuidWarp = UUID.fromString("3e3260c7-303a-4ea9-83b9-f43c34c96908");
@@ -174,23 +178,10 @@ public class TFile extends TDirectory implements Closeable {
         }
     }
 
-    private void write(RootOutput out) throws IOException {
-    }
-
-    @ClassDef(hasStandardHeader = false, suppressTStreamerInfo = true)
-    private static class WeirdExtraNameAndTitle {
-
-        private final String fName;
-        private final String fTitle;
-
-        public WeirdExtraNameAndTitle(String fName, String fTitle) {
-            this.fName = fName;
-            this.fTitle = fTitle;
-        }
-
-        private void write(RootOutput out) throws IOException {
-            out.writeObject(fName);
-            out.writeObject(fTitle);
-        }
+    @Override
+    void streamer(RootOutput out) throws IOException {
+        out.writeObject(getName());
+        out.writeObject(getTitle());
+        super.streamer(out);
     }
 }

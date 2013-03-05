@@ -3,40 +3,58 @@ package play;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 import play.annotations.ClassDef;
 import play.classes.TDatime;
 import play.classes.TNamed;
+import play.classes.TString;
 import play.classes.TUUID;
 
 /**
  * Represents a directory within a root file. There is always a top-level
- * directory associated with a Root file, and may or may not be
- * subdirectories within the file.
+ * directory associated with a Root file, and may or may not be subdirectories
+ * within the file.
  */
 @ClassDef(version = 5, hasStandardHeader = false, suppressTStreamerInfo = true)
-public class TDirectory {
+public class TDirectory extends TNamed {
+
     static Date timeWarp;
     static UUID uuidWarp;
     private TDatime fDatimeC;
     private TDatime fDatimeF;
-    int fNbytesKeys;
+    private int fNbytesKeys;
     int fNbytesName;
     Pointer fSeekDir;
     private Pointer fSeekParent;
+    // The record containing this directory
+    private TKey directoryRecord;
+    // This is the record that contains the keys for this directory.
+    // For the TFile this is written at fSeekKeys
+    private TKey seekKeysRecord;
     Pointer fSeekKeys;
-    TUUID fUUID = new TUUID(TFile.uuidWarp);
-    private TKeyList tList = new TKeyList();
-    final List<TKey> dataRecords = new ArrayList<>();
+    TUUID fUUID = new TUUID(uuidWarp);
+    private KeyList keyList = new KeyList();
 
-    TDirectory(Pointer self) {
-        fDatimeC = fDatimeF = new TDatime(TFile.timeWarp);
+    TDirectory(String name, String title, Pointer self, Pointer parent) {
+        super(name, title);
+        fDatimeC = fDatimeF = new TDatime(timeWarp);
         fSeekDir = self;
         fSeekParent = Pointer.ZERO;
     }
-    
-        /**
+    /**
+     * Each directory has two records in the corresponding TFile, one containing
+     * the TDirectory itself, and the other containing the key list.
+     * @param tFile The TFile in which the records will be created.
+     */
+    void addOwnRecords(TFile tFile) {
+        directoryRecord = tFile.addRecord("TFile", getName(), getTitle(), Pointer.ZERO, true);
+        fNbytesName = 32 + 2 * TString.sizeOnDisk(getName()) + 2 * TString.sizeOnDisk(getTitle());
+        directoryRecord.add(this);
+        seekKeysRecord = tFile.addKeyListRecord("TFile", getName(), getTitle(), fSeekDir, true);
+        seekKeysRecord.add(keyList);
+        fSeekKeys = seekKeysRecord.getSeekKey();
+    }
+    /**
      * Add an object to a directory. Note that this just registers the object
      * with the file, the data is not extracted from the object and written to
      * disk until flush() or close() is called.
@@ -54,13 +72,13 @@ public class TDirectory {
             fName = className;
             fTitle = "";
         }
-        TKey record = new TKey((TFile) this, className, fName, fTitle, fSeekDir, false);
+        TKey record = ((TFile) this).addRecord(className, fName, fTitle, fSeekDir, false);
         record.add(object);
-        dataRecords.add(record);
-        this.add(record);
+        keyList.add(record);
     }
 
-    private void write(RootOutput out) throws IOException {
+    void streamer(RootOutput out) throws IOException {
+        fNbytesKeys = seekKeysRecord.size;
         out.writeShort(TDirectory.class.getAnnotation(ClassDef.class).version());
         out.writeObject(fDatimeC);
         out.writeObject(fDatimeF);
@@ -77,19 +95,11 @@ public class TDirectory {
         }
     }
 
-    TKeyList getKeyList() {
-        return tList;
-    }
-
-    void add(TKey record) {
-        tList.add(record);
-    }
-    
     @ClassDef(hasStandardHeader = false)
-    private static class TKeyList {
-        
+    private static class KeyList {
+
         private ArrayList<TKey> list = new ArrayList<>();
-        
+
         private void write(RootOutput out) throws IOException {
             out.writeInt(list.size());
             for (TKey o : list) {
@@ -100,7 +110,5 @@ public class TDirectory {
         private void add(TKey record) {
             list.add(record);
         }
-
     }
-
 }
