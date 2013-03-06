@@ -17,12 +17,12 @@ import play.classes.TUUID;
 @ClassDef(version = 5, hasStandardHeader = false, suppressTStreamerInfo = true)
 public class TDirectory extends TNamed {
 
-    static Date timeWarp;
+    private static Date timeWarp;
     private static UUID uuidWarp;
     private TDatime fDatimeC;
     private TDatime fDatimeF;
     private int fNbytesKeys;
-    int fNbytesName;
+    private int fNbytesName;
     private Pointer fSeekDir;
     private Pointer fSeekParent;
     // The record containing this directory
@@ -31,7 +31,7 @@ public class TDirectory extends TNamed {
     // For the TFile this is written at fSeekKeys
     private TKey seekKeysRecord;
     private Pointer fSeekKeys;
-    TUUID fUUID = new TUUID(uuidWarp);
+    private TUUID fUUID = new TUUID(uuidWarp);
     private KeyList keyList = new KeyList();
     private final TDirectory parent;
 
@@ -41,20 +41,23 @@ public class TDirectory extends TNamed {
         fDatimeC = fDatimeF = new TDatime(timeWarp);
         fSeekParent = parent == null ? Pointer.ZERO : parent.fSeekDir;
     }
+
     /**
      * Each directory has two records in the corresponding TFile, one containing
      * the TDirectory itself, and the other containing the key list.
+     *
      * @param tFile The TFile in which the records will be created.
      */
-    void addOwnRecords(TFile tFile, Pointer parent) {
-        String className = StreamerUtilities.getClassInfo(getClass()).getName();
-        directoryRecord = tFile.addRecord(className, getName(), getTitle(), parent, true);
+    void addOwnRecords(Pointer parent) {
+        TFile tFile = getTFile();
+        directoryRecord = tFile.addRecord(getClass(), getName(), getTitle(), parent, true);
         directoryRecord.add(this);
         this.fSeekDir = directoryRecord.getSeekKey();
-        seekKeysRecord = tFile.addKeyListRecord(className, getName(), getTitle(), fSeekDir, true);
+        seekKeysRecord = tFile.addKeyListRecord(getClass(), getName(), getTitle(), fSeekDir, true);
         seekKeysRecord.add(keyList);
         fSeekKeys = seekKeysRecord.getSeekKey();
     }
+
     /**
      * Add an object to a directory. Note that this just registers the object
      * with the file, the data is not extracted from the object and written to
@@ -63,32 +66,54 @@ public class TDirectory extends TNamed {
      * @param object The object to be written to disk.
      */
     public void add(Object object) {
-        String className = StreamerUtilities.getClassInfo(object.getClass()).getName();
         String fName, fTitle;
         if (object instanceof TNamed) {
             TNamed tNamed = (TNamed) object;
             fName = tNamed.getName();
             fTitle = tNamed.getTitle();
         } else {
-            fName = className;
+            fName = StreamerUtilities.getClassInfo(object.getClass()).getName();
             fTitle = "";
         }
-        TKey record = getTFile().addRecord(className, fName, fTitle, fSeekDir, false);
+        TKey record = getTFile().addRecord(object.getClass(), fName, fTitle, fSeekDir, false);
         record.add(object);
         keyList.add(record);
     }
-    
+
+    /**
+     * Add a new subdirectory to this directory. The returned TDirectory should
+     * be used to add items to the newly created subdirectory.
+     *
+     * @param name The name of the new directory
+     * @return The newly created subdirectory
+     */
     public TDirectory mkdir(String name) {
-        TDirectory newDir = new TDirectory(name,"",this);
-        newDir.addOwnRecords(getTFile(),fSeekDir);
+        TDirectory newDir = new TDirectory(name, "", this);
+        newDir.addOwnRecords(fSeekDir);
         keyList.add(newDir.directoryRecord);
         return newDir;
     }
-    
+
+    /**
+     * Search up the TDirectory tree until reach the top level, which must be a
+     * TFile.
+     *
+     * @return
+     */
     private TFile getTFile() {
-        for (TDirectory dir = this; ; dir=dir.parent) {
-            if (dir instanceof TFile) return (TFile) dir;
+        for (TDirectory dir = this;; dir = dir.parent) {
+            if (dir instanceof TFile) {
+                return (TFile) dir;
+            }
         }
+    }
+
+    int getNBytesName() {
+        return fNbytesName;
+    }
+
+    Object getUUID() {
+        return fUUID;
     }
 
     void streamer(RootOutput out) throws IOException {
@@ -109,7 +134,10 @@ public class TDirectory extends TNamed {
             }
         }
     }
-
+    /**
+     * Used to remove unpredictable elements from the file during testing 
+     * @param testMode <code>true</code> to used fixed timestamps/uuid
+     */
     static void setTimeWarp(boolean testMode) {
         if (testMode) {
             timeWarp = new Date(1362336450390L);
@@ -118,6 +146,10 @@ public class TDirectory extends TNamed {
             timeWarp = null;
             uuidWarp = null;
         }
+    }
+
+    static Date getTimeWarp() {
+        return timeWarp;
     }
 
     @ClassDef(hasStandardHeader = false)

@@ -12,7 +12,8 @@ import play.classes.TNamed;
  */
 @ClassDef(hasStandardHeader = false)
 class TKey extends TNamed {
-    String className;
+    private final Class objectClass;
+    private final String className;
     private static final int keyVersion = 4;
     private static final int cycle = 1;
     private Pointer seekPDir;
@@ -35,12 +36,14 @@ class TKey extends TNamed {
      * @param fTitle The title of the record
      * @param seekPDir A pointer to the parent directory
      */
-    TKey(TFile tFile, String className, String fName, String fTitle, Pointer seekPDir, boolean suppressStreamerInfo) {
+    TKey(TFile tFile, Class objectClass, String fName, String fTitle, Pointer seekPDir, boolean suppressStreamerInfo) {
         super(fName,fTitle);
         this.tFile = tFile;
-        this.className = className;
+        this.objectClass = objectClass;
         this.seekPDir = seekPDir;
         this.suppressStreamerInfo = suppressStreamerInfo;
+        this.className = StreamerUtilities.getClassInfo(objectClass).getName();
+        
     }
 
     /**
@@ -52,7 +55,7 @@ class TKey extends TNamed {
      * @throws IOException
      */
     void writeRecord(RootRandomAccessFile out) throws IOException {
-        fDatimeC = new TDatime(TDirectory.timeWarp);
+        fDatimeC = new TDatime(TDirectory.getTimeWarp());
         long seekKey = out.getFilePointer();
         fSeekKey.set(seekKey);
         out.seek(seekKey + 18);
@@ -83,6 +86,7 @@ class TKey extends TNamed {
         out.writeShort(cycle); // Cycle of key
         out.seek(endPos);
     }
+    
     void rewrite(RootRandomAccessFile out) throws IOException {
         out.seek(fSeekKey.get());
         writeRecord(out);
@@ -108,7 +112,11 @@ class TKey extends TNamed {
     void add(Object object) {
         objects.add(object);
     }
-
+    
+    Class getObjectClass() {
+        return objectClass;
+    }
+    
     /**
      * Used to write the short version of the record into the seekKeysRecord
      * at the end of the file.

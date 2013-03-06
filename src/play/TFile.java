@@ -26,8 +26,8 @@ public class TFile extends TDirectory implements Closeable {
     private static final int fVersion = 52800;
     private static final int fBEGIN = 0x64;
     private Pointer fEND = new Pointer(0);
-    private Pointer fSeekFree = new Pointer(0);
-    private Pointer fNbytesFree = new Pointer(0);
+    private Pointer fSeekFree = Pointer.ZERO;
+    private Pointer fNbytesFree = Pointer.ZERO;
     private int nfree = 0;
     private boolean largeFile = false;
     private int fCompress = 0;
@@ -63,9 +63,9 @@ public class TFile extends TDirectory implements Closeable {
     public TFile(File file) throws FileNotFoundException, IOException {
 
         super(nameWarp == null ? file.getName() : nameWarp, "", null);
-        addOwnRecords(this, Pointer.ZERO);
+        addOwnRecords(Pointer.ZERO);
         out = new RootRandomAccessFile(file, this);
-        seekInfoRecord = new TKey(this, "TList", "StreamerInfo", "Doubly linked list", new Pointer(fBEGIN), true);
+        seekInfoRecord = new TKey(this, TList.class, "StreamerInfo", "Doubly linked list", new Pointer(fBEGIN), true);
         fSeekInfo = seekInfoRecord.getSeekKey();
         TList<TStreamerInfo> list = new TList<>(streamerInfos.values());
         seekInfoRecord.add(list);
@@ -91,8 +91,7 @@ public class TFile extends TDirectory implements Closeable {
         // Rewrite TDirectorys to get updated fSeekKey pointer
         out.seek(fBEGIN);
         for (TKey record : dataRecords) {
-            String className = record.className;
-            if ("TFile".equals(className) || "TDirectory".equals(className)) {
+            if (TDirectory.class.isAssignableFrom(record.getObjectClass())) {
                 record.rewrite(out);
             }
         }
@@ -128,12 +127,12 @@ public class TFile extends TDirectory implements Closeable {
         out.writeObject(fSeekFree);       // Pointer to FREE data record
         out.writeObject(fNbytesFree);     // Number of bytes in FREE data record
         out.writeInt(nfree);              // Number of free data records                                          
-        out.writeInt(fNbytesName);        // Number of bytes in TNamed at creation time
+        out.writeInt(getNBytesName());        // Number of bytes in TNamed at creation time
         out.writeByte(largeFile ? 8 : 4); // Number of bytes for file pointers
         out.writeInt(fCompress);          // Compression level and algorithm
         out.writeObject(fSeekInfo);       // Pointer to TStreamerInfo record
         out.writeObject(fNbytesInfo);     // Number of bytes in TStreamerInfo record
-        out.writeObject(fUUID);
+        out.writeObject(getUUID());
     }
 
     /**
@@ -150,14 +149,14 @@ public class TFile extends TDirectory implements Closeable {
         return streamerInfos;
     }
 
-    TKey addRecord(String className, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
-        TKey tKey = new TKey(this, className, fName, fTitle, fSeekDir, suppressStreamerInfo);
+    TKey addRecord(Class objectClass, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
+        TKey tKey = new TKey(this, objectClass, fName, fTitle, fSeekDir, suppressStreamerInfo);
         dataRecords.add(tKey); 
         return tKey;
     }
 
-    TKey addKeyListRecord(String className, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
-        TKey tKey = new TKey(this, className, fName, fTitle, fSeekDir, suppressStreamerInfo);
+    TKey addKeyListRecord(Class objectClass, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
+        TKey tKey = new TKey(this, objectClass, fName, fTitle, fSeekDir, suppressStreamerInfo);
         keyRecords.add(tKey); 
         return tKey;
     }

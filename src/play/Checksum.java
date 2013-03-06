@@ -1,7 +1,7 @@
 package play;
 
 /**
- *
+ * Utility for computing root checksums.
  * @author tonyj
  */
 class Checksum {

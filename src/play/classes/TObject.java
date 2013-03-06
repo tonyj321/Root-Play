@@ -28,10 +28,5 @@ public class TObject {
         out.writeInt(fUniqueID);
         out.writeInt(fBits);
     }
-
-    @Override
-    public String toString() {
-        return "TObject{" + "fBits=" + fBits + '}';
-    }
     
 }
