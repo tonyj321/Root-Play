@@ -16,7 +16,7 @@ public @interface FieldType {
 
     /**
      * The type of this field. 
-     * @see play.Type
+     * @see hep.io.root.output.Type
      */
     public Type value();
 }

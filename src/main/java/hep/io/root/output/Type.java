@@ -9,7 +9,7 @@ import hep.io.root.output.classes.TString;
 
 /**
  * Used to mark the type of fields within a Object.
- * @see play.annotations.FieldType
+ * @see hep.io.root.output.annotations.FieldType
  * @author tonyj
  */
 public enum Type {

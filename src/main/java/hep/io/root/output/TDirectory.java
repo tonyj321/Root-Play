@@ -97,8 +97,6 @@ public class TDirectory extends TNamed {
     /**
      * Search up the TDirectory tree until reach the top level, which must be a
      * TFile.
-     *
-     * @return
      */
     private TFile getTFile() {
         for (TDirectory dir = this;; dir = dir.parent) {
