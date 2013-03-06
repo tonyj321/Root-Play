@@ -6,11 +6,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import play.annotations.ClassDef;
 
 /**
@@ -64,8 +62,8 @@ public class TFile extends TDirectory implements Closeable {
      */
     public TFile(File file) throws FileNotFoundException, IOException {
 
-        super(nameWarp == null ? file.getName() : nameWarp, "", new Pointer(fBEGIN), Pointer.ZERO);
-        addOwnRecords(this);
+        super(nameWarp == null ? file.getName() : nameWarp, "", null);
+        addOwnRecords(this, Pointer.ZERO);
         out = new RootRandomAccessFile(file, this);
         seekInfoRecord = new TKey(this, "TList", "StreamerInfo", "Doubly linked list", new Pointer(fBEGIN), true);
         fSeekInfo = seekInfoRecord.getSeekKey();
@@ -90,9 +88,14 @@ public class TFile extends TDirectory implements Closeable {
             record.writeRecord(out);
         }
         fEND.set(out.getFilePointer());
-        // Rewrite topLevelRecord to get updated fSeekKey pointer
+        // Rewrite TDirectorys to get updated fSeekKey pointer
         out.seek(fBEGIN);
-        dataRecords.get(0).writeRecord(out);
+        for (TKey record : dataRecords) {
+            String className = record.className;
+            if ("TFile".equals(className) || "TDirectory".equals(className)) {
+                record.rewrite(out);
+            }
+        }
         // Finally write the header
         writeHeader();
     }
@@ -124,9 +127,8 @@ public class TFile extends TDirectory implements Closeable {
         out.writeObject(fEND);            // Pointer to first free word at the EOF
         out.writeObject(fSeekFree);       // Pointer to FREE data record
         out.writeObject(fNbytesFree);     // Number of bytes in FREE data record
-        out.writeInt(nfree);              // Number of free data records
-        // Number of bytes in TNamed at creation time
-        out.writeInt(fNbytesName);
+        out.writeInt(nfree);              // Number of free data records                                          
+        out.writeInt(fNbytesName);        // Number of bytes in TNamed at creation time
         out.writeByte(largeFile ? 8 : 4); // Number of bytes for file pointers
         out.writeInt(fCompress);          // Compression level and algorithm
         out.writeObject(fSeekInfo);       // Pointer to TStreamerInfo record
@@ -168,14 +170,11 @@ public class TFile extends TDirectory implements Closeable {
      */
     public static void setTimeWarp(boolean testMode) {
         if (testMode) {
-            timeWarp = new Date(1362336450390L);
-            uuidWarp = UUID.fromString("3e3260c7-303a-4ea9-83b9-f43c34c96908");
             nameWarp = "timewarp.root";
         } else {
-            timeWarp = null;
-            uuidWarp = null;
             nameWarp = null;
         }
+        TDirectory.setTimeWarp(testMode);
     }
 
     @Override

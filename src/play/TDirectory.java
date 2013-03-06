@@ -7,7 +7,6 @@ import java.util.UUID;
 import play.annotations.ClassDef;
 import play.classes.TDatime;
 import play.classes.TNamed;
-import play.classes.TString;
 import play.classes.TUUID;
 
 /**
@@ -19,38 +18,40 @@ import play.classes.TUUID;
 public class TDirectory extends TNamed {
 
     static Date timeWarp;
-    static UUID uuidWarp;
+    private static UUID uuidWarp;
     private TDatime fDatimeC;
     private TDatime fDatimeF;
     private int fNbytesKeys;
     int fNbytesName;
-    Pointer fSeekDir;
+    private Pointer fSeekDir;
     private Pointer fSeekParent;
     // The record containing this directory
     private TKey directoryRecord;
     // This is the record that contains the keys for this directory.
     // For the TFile this is written at fSeekKeys
     private TKey seekKeysRecord;
-    Pointer fSeekKeys;
+    private Pointer fSeekKeys;
     TUUID fUUID = new TUUID(uuidWarp);
     private KeyList keyList = new KeyList();
+    private final TDirectory parent;
 
-    TDirectory(String name, String title, Pointer self, Pointer parent) {
+    TDirectory(String name, String title, TDirectory parent) {
         super(name, title);
+        this.parent = parent;
         fDatimeC = fDatimeF = new TDatime(timeWarp);
-        fSeekDir = self;
-        fSeekParent = Pointer.ZERO;
+        fSeekParent = parent == null ? Pointer.ZERO : parent.fSeekDir;
     }
     /**
      * Each directory has two records in the corresponding TFile, one containing
      * the TDirectory itself, and the other containing the key list.
      * @param tFile The TFile in which the records will be created.
      */
-    void addOwnRecords(TFile tFile) {
-        directoryRecord = tFile.addRecord("TFile", getName(), getTitle(), Pointer.ZERO, true);
-        fNbytesName = 32 + 2 * TString.sizeOnDisk(getName()) + 2 * TString.sizeOnDisk(getTitle());
+    void addOwnRecords(TFile tFile, Pointer parent) {
+        String className = StreamerUtilities.getClassInfo(getClass()).getName();
+        directoryRecord = tFile.addRecord(className, getName(), getTitle(), parent, true);
         directoryRecord.add(this);
-        seekKeysRecord = tFile.addKeyListRecord("TFile", getName(), getTitle(), fSeekDir, true);
+        this.fSeekDir = directoryRecord.getSeekKey();
+        seekKeysRecord = tFile.addKeyListRecord(className, getName(), getTitle(), fSeekDir, true);
         seekKeysRecord.add(keyList);
         fSeekKeys = seekKeysRecord.getSeekKey();
     }
@@ -61,7 +62,7 @@ public class TDirectory extends TNamed {
      *
      * @param object The object to be written to disk.
      */
-    public void add(Object object) throws IOException {
+    public void add(Object object) {
         String className = StreamerUtilities.getClassInfo(object.getClass()).getName();
         String fName, fTitle;
         if (object instanceof TNamed) {
@@ -72,13 +73,27 @@ public class TDirectory extends TNamed {
             fName = className;
             fTitle = "";
         }
-        TKey record = ((TFile) this).addRecord(className, fName, fTitle, fSeekDir, false);
+        TKey record = getTFile().addRecord(className, fName, fTitle, fSeekDir, false);
         record.add(object);
         keyList.add(record);
+    }
+    
+    public TDirectory mkdir(String name) {
+        TDirectory newDir = new TDirectory(name,"",this);
+        newDir.addOwnRecords(getTFile(),fSeekDir);
+        keyList.add(newDir.directoryRecord);
+        return newDir;
+    }
+    
+    private TFile getTFile() {
+        for (TDirectory dir = this; ; dir=dir.parent) {
+            if (dir instanceof TFile) return (TFile) dir;
+        }
     }
 
     void streamer(RootOutput out) throws IOException {
         fNbytesKeys = seekKeysRecord.size;
+        fNbytesName = (int) ((RootOutputNonPublic) out).getFilePointer();
         out.writeShort(TDirectory.class.getAnnotation(ClassDef.class).version());
         out.writeObject(fDatimeC);
         out.writeObject(fDatimeF);
@@ -92,6 +107,16 @@ public class TDirectory extends TNamed {
             for (int i = 0; i < 3; i++) {
                 out.writeInt(0);
             }
+        }
+    }
+
+    static void setTimeWarp(boolean testMode) {
+        if (testMode) {
+            timeWarp = new Date(1362336450390L);
+            uuidWarp = UUID.fromString("3e3260c7-303a-4ea9-83b9-f43c34c96908");
+        } else {
+            timeWarp = null;
+            uuidWarp = null;
         }
     }
 

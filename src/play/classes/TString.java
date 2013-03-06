@@ -39,12 +39,6 @@ public class TString {
         }
     }
 
-    
-    public static int sizeOnDisk(String string) {
-        int l = string.getBytes().length;
-        return l < 255 ? l + 1 : l + 5;
-    }
-
     @Override
     public String toString() {
         return string;

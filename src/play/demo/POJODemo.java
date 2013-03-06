@@ -11,7 +11,6 @@ import play.TFile;
 public class POJODemo {
 
     public static void main(String[] args) throws IOException {
-        TFile.setTimeWarp(true);
         try (TFile file = new TFile("pojo.root")) {
             file.add(new POJO());
         }

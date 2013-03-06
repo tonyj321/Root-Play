@@ -12,7 +12,7 @@ import play.classes.TNamed;
  */
 @ClassDef(hasStandardHeader = false)
 class TKey extends TNamed {
-    private String className;
+    String className;
     private static final int keyVersion = 4;
     private static final int cycle = 1;
     private Pointer seekPDir;
@@ -82,6 +82,10 @@ class TKey extends TNamed {
         out.writeShort(keyLen); // Length of the key structure (in bytes)
         out.writeShort(cycle); // Cycle of key
         out.seek(endPos);
+    }
+    void rewrite(RootRandomAccessFile out) throws IOException {
+        out.seek(fSeekKey.get());
+        writeRecord(out);
     }
 
     /**
