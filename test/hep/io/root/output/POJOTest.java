@@ -1,6 +1,5 @@
 package hep.io.root.output;
 
-import hep.io.root.output.TFile;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

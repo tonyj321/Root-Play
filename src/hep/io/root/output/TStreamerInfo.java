@@ -2,7 +2,6 @@ package hep.io.root.output;
 
 import java.io.IOException;
 import hep.io.root.output.annotations.ClassDef;
-import hep.io.root.output.annotations.FieldType;
 import hep.io.root.output.classes.TNamed;
 import hep.io.root.output.classes.TObjArray;
 

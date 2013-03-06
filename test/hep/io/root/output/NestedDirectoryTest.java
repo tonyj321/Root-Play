@@ -1,7 +1,5 @@
 package hep.io.root.output;
 
-import hep.io.root.output.TFile;
-import hep.io.root.output.TDirectory;
 import java.io.File;
 import java.io.IOException;
 import org.junit.Test;

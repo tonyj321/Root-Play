@@ -1,6 +1,5 @@
 package hep.io.root.output;
 
-import hep.io.root.output.Checksum;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

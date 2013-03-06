@@ -1,6 +1,5 @@
 package hep.io.root.output;
 
-import java.io.IOException;
 import hep.io.root.output.annotations.ClassDef;
 
 /**
