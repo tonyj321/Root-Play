@@ -14,24 +14,8 @@ class StreamerUtilities {
     }
 
     static TStreamerInfo getStreamerInfo(Class c) throws StreamerInfoException {
-        StreamerClassInfo classInfo = getClassInfo(c);
-
-        Class s = c.getSuperclass();
-        if (s != Object.class) {
-            classInfo.setSuperClass(new StreamerClassInfo(s));
-        }
-
-        for (Field f : c.getDeclaredFields()) {
-            try {
-                if ((f.getModifiers() & (Modifier.TRANSIENT | Modifier.STATIC)) == 0) {
-                    StreamerFieldInfo fieldInfo = new StreamerFieldInfo(classInfo, f);
-                    classInfo.addField(fieldInfo);
-                }
-            } catch (StreamerInfoException x) {
-                x.setField(c.getName(), f.getName());
-                throw x;
-            }
-        }
+        final StreamerClassInfo classInfo = getClassInfo(c);
+        classInfo.resolveDependencies();
         return new TStreamerInfo(classInfo);
     }
 }

@@ -108,9 +108,13 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
                     if (sc != Object.class) {
                         writeObject(out, o, sc);
                     }
-                    Method m = c.getDeclaredMethod("write", RootOutput.class);
-                    m.setAccessible(true);
-                    m.invoke(o, out);
+                    try {
+                        Method m = c.getDeclaredMethod("write", RootOutput.class);
+                        m.setAccessible(true);
+                        m.invoke(o, out);
+                    } catch (NoSuchMethodException ex) {
+                        classInfo.write(out, o);
+                    }
                     long end = out.getFilePointer();
                     out.seek(objectPointer);
                     out.writeInt(kByteCountMask | (int) (end - objectPointer - 4));

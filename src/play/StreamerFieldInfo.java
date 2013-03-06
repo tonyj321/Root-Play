@@ -1,5 +1,6 @@
 package play;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import play.annotations.Counter;
 import play.annotations.FieldType;
@@ -56,6 +57,7 @@ class StreamerFieldInfo {
         } else {
             type = explicitType;
         }
+        field.setAccessible(true);
     }
 
     boolean isBasicType() {
@@ -120,5 +122,31 @@ class StreamerFieldInfo {
 
     int getSize() {
         return type.getSize();
+    }
+    
+    /**
+     * Write a single field of an object to the output stream using the information
+     * in the streamer element.
+     * @param out
+     * @param object 
+     */
+    void write(RootOutput out, Object object) throws IOException {
+        try {
+            switch (type) {
+                case kInt:
+                    out.writeInt(field.getInt(object));
+                    break;
+                case kDouble:
+                    out.writeDouble(field.getDouble(object));
+                    break;
+                case kTString:
+                    out.writeObject(field.get(object));
+                    break;
+                default:
+                    throw new IOException("Unable to handle field "+field.getName()+" of type "+type);
+            }        
+        } catch (IllegalArgumentException | IllegalAccessException x) {
+            throw new IOException("Unable to stream field: "+ field.getName(),x);
+        }
     }
 }
