@@ -2,6 +2,7 @@ package play;
 
 import java.io.IOException;
 import play.annotations.ClassDef;
+import play.annotations.FieldType;
 import play.classes.TNamed;
 import play.classes.TObjArray;
 

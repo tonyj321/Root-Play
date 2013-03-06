@@ -18,12 +18,5 @@ public class TAttLine {
     @Title("line style")
     private short fLineStyle = 1;
     @Title("line width")
-    private short fLineWidth = 1;
-
-    private void write(RootOutput out) throws IOException {
-        out.writeShort(fLineColor);
-        out.writeShort(fLineStyle);
-        out.writeShort(fLineWidth);
-    }
-    
+    private short fLineWidth = 1;  
 }

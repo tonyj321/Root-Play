@@ -25,11 +25,6 @@ public class TNamed extends TObject {
         this.title = title;
     }
 
-    private void write(RootOutput out) throws IOException {
-        out.writeObject(name);
-        out.writeObject(title);
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }

@@ -16,8 +16,4 @@ class TStreamerBase extends TStreamerElement {
         super(info);
         fBaseVersion = info.getVersion();
     }
-
-    private void write(RootOutput out) throws IOException {
-        out.writeInt(fBaseVersion);
-    }
 }

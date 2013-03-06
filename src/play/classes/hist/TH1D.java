@@ -19,9 +19,4 @@ public class TH1D extends TH1 {
         super(name, nBins, xMin, xMax);
         array = new TArrayD(data);
     }
-
-    private void write(RootOutput out) throws IOException {
-        out.writeObject(array);
-    }
-    
 }

@@ -1,7 +1,5 @@
 package play.classes.hist;
 
-import java.io.IOException;
-import play.RootOutput;
 import play.annotations.ClassDef;
 import play.annotations.Title;
 
@@ -18,12 +16,5 @@ public class TAttMarker {
     @Title("Marker style")
     private short fMarkerStyle = 1;
     @Title("Marker size")
-    private float fMarkerSize = 1;
-
-    private void write(RootOutput out) throws IOException {
-        out.writeShort(fMarkerColor);
-        out.writeShort(fMarkerStyle);
-        out.writeFloat(fMarkerSize);
-    }
-    
+    private float fMarkerSize = 1;   
 }

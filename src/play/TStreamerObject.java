@@ -1,6 +1,5 @@
 package play;
 
-import java.io.IOException;
 import play.annotations.ClassDef;
 
 /**
@@ -14,6 +13,4 @@ class TStreamerObject extends TStreamerElement {
         super(field);
     }
 
-    private void write(RootOutput out) throws IOException {
-    }
 }

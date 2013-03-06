@@ -136,11 +136,26 @@ class StreamerFieldInfo {
                 case kInt:
                     out.writeInt(field.getInt(object));
                     break;
+                case kShort:
+                case kUShort:
+                    out.writeShort(field.getShort(object));
+                    break;
+                case kFloat:
+                    out.writeFloat(field.getFloat(object));
+                    break;
                 case kDouble:
                     out.writeDouble(field.getDouble(object));
                     break;
+                case kBool:
+                    out.writeByte(field.getBoolean(object) ? 1 : 0);
+                    break;
+                case kAny:
                 case kTString:
                     out.writeObject(field.get(object));
+                    break;
+                case kObjectP:
+                case kObjectp:
+                    out.writeObjectRef(field.get(object));
                     break;
                 default:
                     throw new IOException("Unable to handle field "+field.getName()+" of type "+type);

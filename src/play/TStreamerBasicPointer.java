@@ -24,10 +24,4 @@ class TStreamerBasicPointer extends TStreamerElement {
         fCountClass = field.getCountClass();
         fCountVersion = field.getCountVersion();
     }
-
-    private void write(RootOutput out) throws IOException {
-        out.writeInt(fCountVersion);
-        out.writeObject(fCountName);
-        out.writeObject(fCountClass);
-    }
 }

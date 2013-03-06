@@ -50,18 +50,4 @@ public class TAxis extends TNamed {
         this.fXmin = xMin;
         this.fXmax = xMax;
     }
-
-    private void write(RootOutput out) throws IOException {
-        out.writeObject(tAttAxis);
-        out.writeInt(fNbins);
-        out.writeDouble(fXmin);
-        out.writeDouble(fXmax);
-        out.writeObject(fXbins);
-        out.writeInt(fFirst);
-        out.writeInt(fLast);
-        out.writeShort(fBits2);
-        out.writeByte(fTimeDisplay ? 1 : 0); // TODO: Check this
-        out.writeObject(fTimeFormat);
-        out.writeObjectRef(fLabels);
-    }
 }
