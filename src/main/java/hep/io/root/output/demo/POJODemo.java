@@ -1,7 +1,6 @@
 package hep.io.root.output.demo;
 
 import java.io.IOException;
-import hep.io.root.output.RootOutput;
 import hep.io.root.output.TFile;
 
 /**

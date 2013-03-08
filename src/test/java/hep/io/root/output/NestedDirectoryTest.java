@@ -18,6 +18,7 @@ public class NestedDirectoryTest {
         File tmp = File.createTempFile("nested", "root");
         tmp.deleteOnExit();
         try (TFile file = new TFile(tmp)) {
+            file.setCompressionLevel(0);
             TDirectory dir = file.mkdir("sub-dir");
             TDirectory sdir = dir.mkdir("sub-sub-dir");
             sdir.add(new TObjString("I am a root file written from Java!"));

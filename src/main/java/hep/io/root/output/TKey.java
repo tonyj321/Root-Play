@@ -135,10 +135,5 @@ class TKey extends TNamed {
         out.writeObject(className);
         out.writeObject(getName());
         out.writeObject(getTitle());
-    }
-
-    private void GZipOutputStream(RootRandomAccessFile out) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
+    } 
 }

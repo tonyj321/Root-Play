@@ -23,6 +23,7 @@ public class POJOTest {
         File tmp = File.createTempFile("pojo", "root");
         tmp.deleteOnExit();
         try (TFile file = new TFile(tmp)) {
+            file.setCompressionLevel(0);
             file.add(new POJODemo.POJO());
         }
         assertEquals(3428885616L, computeChecksum(tmp));

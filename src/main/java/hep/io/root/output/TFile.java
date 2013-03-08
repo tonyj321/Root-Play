@@ -30,7 +30,7 @@ public class TFile extends TDirectory implements Closeable {
     private Pointer fNbytesFree = Pointer.ZERO;
     private int nfree = 0;
     private boolean largeFile = false;
-    private int fCompress = 0;
+    private int fCompress = 1;
     private Pointer fSeekInfo;
     private Pointer fNbytesInfo = new Pointer(0);
     // This is the record that is written at fSeekInfo

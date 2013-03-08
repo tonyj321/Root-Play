@@ -53,7 +53,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         return tFile.isLargeFile();
     }
 
-    void writeTo(RootOutput out, int compressionLevel) throws IOException {
+    void writeTo(RootOutputNonPublic out, int compressionLevel) throws IOException {
         buffer.writeTo(out,compressionLevel);
     }
     
@@ -171,12 +171,24 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
 
     private static class RootByteArrayOutputStream extends ByteArrayOutputStream {
 
-        private void writeTo(RootOutput out, int compressionLevel) throws IOException {
+        private void writeTo(RootOutputNonPublic out, int compressionLevel) throws IOException {
             if (compressionLevel == 0 || count<200) {
                 out.write(buf, 0, count);
             } else {
-                for (int i=0;i<9;i++) out.write(buf);
-                Deflater deflater = new Deflater(compressionLevel,true);
+                out.writeByte('Z');
+                out.writeByte('L');
+                out.writeByte(8); // Method
+                
+                long compressedSizePos = out.getFilePointer();
+                out.writeByte(0);
+                out.writeByte(0);
+                out.writeByte(0);
+
+                out.writeByte(count & 0xff);
+                out.writeByte((count>>8) & 0xff);
+                out.writeByte((count>>16) & 0xff);
+
+                Deflater deflater = new Deflater(compressionLevel,false);
                 deflater.setInput(buf,0,count);
                 deflater.finish();
                 byte[] buffer = new byte[Math.min(32768, count)];
@@ -185,6 +197,13 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
                     out.write(buffer,0,l);
                 }
                 deflater.end();
+                long endPos = out.getFilePointer();
+                int size = (int) (endPos-compressedSizePos-6);
+                out.seek(compressedSizePos);
+                out.writeByte(size & 0xff);
+                out.writeByte((size>>8) & 0xff);
+                out.writeByte((size>>16) & 0xff);
+                out.seek(endPos);
             }
         }
 

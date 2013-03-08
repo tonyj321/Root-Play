@@ -11,7 +11,7 @@ class TStreamerBase extends TStreamerElement {
 
     private int fBaseVersion;
 
-    public TStreamerBase(StreamerClassInfo info) {
+    TStreamerBase(StreamerClassInfo info) {
         super(info);
         fBaseVersion = info.getVersion();
     }
