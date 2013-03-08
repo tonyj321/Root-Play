@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import hep.io.root.output.classes.TString;
+import java.util.zip.Deflater;
 
 /**
  *
@@ -52,10 +53,13 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         return tFile.isLargeFile();
     }
 
-    void writeTo(RootOutput out) throws IOException {
-        buffer.writeTo(out);
+    void writeTo(RootOutput out, int compressionLevel) throws IOException {
+        buffer.writeTo(out,compressionLevel);
     }
-
+    
+    int uncompressedSize() {
+        return buffer.size();
+    }
     @Override
     public void seek(long position) {
         buffer.seek(position - offset);
@@ -167,8 +171,21 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
 
     private static class RootByteArrayOutputStream extends ByteArrayOutputStream {
 
-        private void writeTo(RootOutput out) throws IOException {
-            out.write(buf, 0, count);
+        private void writeTo(RootOutput out, int compressionLevel) throws IOException {
+            if (compressionLevel == 0 || count<200) {
+                out.write(buf, 0, count);
+            } else {
+                for (int i=0;i<9;i++) out.write(buf);
+                Deflater deflater = new Deflater(compressionLevel,true);
+                deflater.setInput(buf,0,count);
+                deflater.finish();
+                byte[] buffer = new byte[Math.min(32768, count)];
+                while(!deflater.finished()) {
+                    int l = deflater.deflate(buffer);
+                    out.write(buffer,0,l);
+                }
+                deflater.end();
+            }
         }
 
         private long getFilePointer() {

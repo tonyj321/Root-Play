@@ -144,6 +144,23 @@ public class TFile extends TDirectory implements Closeable {
     boolean isLargeFile() {
         return largeFile;
     }
+    /**
+     * Get the current compression level
+     * @return The compression level
+     */
+    public int getCompressionLevel() {
+        return fCompress;
+    }
+    /**
+     * Set the compression level for this file.
+     * @param fCompress Compression level, currently must be between 0 and 9
+     */
+    public void setCompressionLevel(int fCompress) {
+        if (fCompress<0 || fCompress>9) {
+            throw new IllegalArgumentException("fCompress<0 || fCompress>9");
+        }
+        this.fCompress = fCompress;
+    }
 
     Map<String, TStreamerInfo> getStreamerInfos() {
         return streamerInfos;
@@ -181,5 +198,5 @@ public class TFile extends TDirectory implements Closeable {
         out.writeObject(getName());
         out.writeObject(getTitle());
         super.streamer(out);
-    }
+    }  
 }

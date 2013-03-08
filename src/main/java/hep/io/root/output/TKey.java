@@ -43,7 +43,6 @@ class TKey extends TNamed {
         this.seekPDir = seekPDir;
         this.suppressStreamerInfo = suppressStreamerInfo;
         this.className = StreamerUtilities.getClassInfo(objectClass).getName();
-        
     }
 
     /**
@@ -73,9 +72,9 @@ class TKey extends TNamed {
             buffer.writeObject(object);
         }
         buffer.close();
-        buffer.writeTo(out);
+        buffer.writeTo(out, tFile.getCompressionLevel());
         long endPos = out.getFilePointer();
-        objLen = (int) (endPos - dataPos);
+        objLen = buffer.uncompressedSize();
         size = (int) (endPos - seekKey);
         out.seek(seekKey);
         out.writeInt(size); // Length of compressed object
@@ -136,6 +135,10 @@ class TKey extends TNamed {
         out.writeObject(className);
         out.writeObject(getName());
         out.writeObject(getTitle());
+    }
+
+    private void GZipOutputStream(RootRandomAccessFile out) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }

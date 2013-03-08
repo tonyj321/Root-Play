@@ -12,6 +12,7 @@ public class HistogramDemo {
     public static void main(String[] args) throws IOException {
         
         try (TFile file = new TFile("play.root")) {
+            file.setCompressionLevel(1);
             file.add(new TObjString("I am a root file written from Java!"));
             SimpleHistogramFiller demo = new SimpleHistogramFiller();
             file.add(demo.create1DHistogram("test1","Histogram created from Java"));
