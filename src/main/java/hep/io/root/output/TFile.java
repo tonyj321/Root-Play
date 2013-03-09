@@ -10,6 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import hep.io.root.output.annotations.ClassDef;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Top level class for interacting with a Root file. Currently this
@@ -22,7 +26,7 @@ import hep.io.root.output.annotations.ClassDef;
 @ClassDef(hasStandardHeader = false, suppressTStreamerInfo = true)
 public class TFile extends TDirectory implements Closeable {
 
-    private final RootRandomAccessFile out;
+    private final SeekableByteChannel channel;
     private static final int fVersion = 52800;
     private static final int fBEGIN = 0x64;
     private Pointer fEND = new Pointer(0);
@@ -49,7 +53,7 @@ public class TFile extends TDirectory implements Closeable {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public TFile(String file) throws FileNotFoundException, IOException {
+    public TFile(String file) throws IOException {
         this(new File(file));
     }
 
@@ -60,11 +64,17 @@ public class TFile extends TDirectory implements Closeable {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public TFile(File file) throws FileNotFoundException, IOException {
-
-        super(nameWarp == null ? file.getName() : nameWarp, "", null);
+    public TFile(File file) throws IOException {
+        this(file.toPath());
+    }
+    public TFile(Path path) throws IOException {
+        this(Files.newByteChannel(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING),path.getFileName().toString());
+    }
+    public TFile(SeekableByteChannel channel, String name) {
+        
+        super(nameWarp == null ? name : nameWarp, "", null);
+        this.channel = channel;
         addOwnRecords(Pointer.ZERO);
-        out = new RootRandomAccessFile(file, this);
         seekInfoRecord = new TKey(this, TList.class, "StreamerInfo", "Doubly linked list", new Pointer(fBEGIN), true);
         fSeekInfo = seekInfoRecord.getSeekKey();
         TList<TStreamerInfo> list = new TList<>(streamerInfos.values());
@@ -78,21 +88,21 @@ public class TFile extends TDirectory implements Closeable {
      * @throws IOException
      */
     public void flush() throws IOException {
-        out.seek(fBEGIN);
+        channel.position(fBEGIN);
         for (TKey record : dataRecords) {
-            record.writeRecord(out);
+            record.writeRecord(channel);
         }
-        seekInfoRecord.writeRecord(out);
+        seekInfoRecord.writeRecord(channel);
         fNbytesInfo.set(seekInfoRecord.size);
         for (TKey record : keyRecords) {
-            record.writeRecord(out);
+            record.writeRecord(channel);
         }
-        fEND.set(out.getFilePointer());
+        fEND.set(channel.position());
         // Rewrite TDirectorys to get updated fSeekKey pointer
-        out.seek(fBEGIN);
+        channel.position(fBEGIN);
         for (TKey record : dataRecords) {
             if (TDirectory.class.isAssignableFrom(record.getObjectClass())) {
-                record.rewrite(out);
+                record.rewrite(channel);
             }
         }
         // Finally write the header
@@ -107,7 +117,7 @@ public class TFile extends TDirectory implements Closeable {
     @Override
     public void close() throws IOException {
         flush();
-        out.close();
+        channel.close();
     }
 
     /**
@@ -116,7 +126,7 @@ public class TFile extends TDirectory implements Closeable {
      * @throws IOException
      */
     private void writeHeader() throws IOException {
-        out.seek(0);
+        RootBufferedOutputStream out = new RootBufferedOutputStream(this,0,true);
         out.writeByte('r');
         out.writeByte('o');
         out.writeByte('o');
@@ -127,12 +137,14 @@ public class TFile extends TDirectory implements Closeable {
         out.writeObject(fSeekFree);       // Pointer to FREE data record
         out.writeObject(fNbytesFree);     // Number of bytes in FREE data record
         out.writeInt(nfree);              // Number of free data records                                          
-        out.writeInt(getNBytesName());        // Number of bytes in TNamed at creation time
+        out.writeInt(getNBytesName());    // Number of bytes in TNamed at creation time
         out.writeByte(largeFile ? 8 : 4); // Number of bytes for file pointers
         out.writeInt(fCompress);          // Compression level and algorithm
         out.writeObject(fSeekInfo);       // Pointer to TStreamerInfo record
         out.writeObject(fNbytesInfo);     // Number of bytes in TStreamerInfo record
         out.writeObject(getUUID());
+        channel.position(0);
+        out.writeTo(channel,0);
     }
 
     /**
