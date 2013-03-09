@@ -153,13 +153,13 @@ public class TFile extends TDirectory implements Closeable {
     }
     /**
      * Set the compression level for this file.
-     * @param fCompress Compression level, currently must be between 0 and 9
+     * @param level Compression level, currently must be between 0 and 9
      */
-    public void setCompressionLevel(int fCompress) {
-        if (fCompress<0 || fCompress>9) {
+    public void setCompressionLevel(int level) {
+        if (level<0 || level>9) {
             throw new IllegalArgumentException("fCompress<0 || fCompress>9");
         }
-        this.fCompress = fCompress;
+        this.fCompress = level;
     }
 
     Map<String, TStreamerInfo> getStreamerInfos() {
@@ -184,7 +184,7 @@ public class TFile extends TDirectory implements Closeable {
      *
      * @param testMode <code>true</code> to set test mode
      */
-    public static void setTimeWarp(boolean testMode) {
+    static void setTimeWarp(boolean testMode) {
         if (testMode) {
             nameWarp = "timewarp.root";
         } else {
