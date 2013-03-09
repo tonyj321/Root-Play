@@ -6,7 +6,6 @@ import java.util.List;
 import hep.io.root.output.annotations.ClassDef;
 import hep.io.root.output.classes.TDatime;
 import hep.io.root.output.classes.TNamed;
-import java.nio.channels.SeekableByteChannel;
 
 /**
  * A class representing a record within the root file.
@@ -54,45 +53,41 @@ class TKey extends TNamed {
      * @param out
      * @throws IOException
      */
-    void writeRecord(SeekableByteChannel out) throws IOException {
+    void writeRecord(RootRandomAccessFile out) throws IOException {
         fDatimeC = new TDatime(TDirectory.getTimeWarp());
-        long seekKey = out.position();
+        long seekKey = out.getFilePointer();
         fSeekKey.set(seekKey);
-        // Key buffer is used to buffer the data for the key header
-        RootBufferedOutputStream keyBuffer = new RootBufferedOutputStream(tFile, 0, true);
-        keyBuffer.seek(18);
-        keyBuffer.writeObject(fSeekKey); // Pointer to record itself (consistency check)
-        keyBuffer.writeObject(seekPDir); // Pointer to directory header
-        keyBuffer.writeObject(className);
-        keyBuffer.writeObject(getName());
-        keyBuffer.writeObject(getTitle());
-        keyLen = (int) keyBuffer.getFilePointer();
-        out.position(seekKey+keyLen);
-        // Write all the data objects associated with this record into a new DataBuffer
-        RootBufferedOutputStream dataBuffer = new RootBufferedOutputStream(tFile, keyLen, suppressStreamerInfo);
+        out.seek(seekKey + 18);
+        out.writeObject(fSeekKey); // Pointer to record itself (consistency check)
+        out.writeObject(seekPDir); // Pointer to directory header
+        out.writeObject(className);
+        out.writeObject(getName());
+        out.writeObject(getTitle());
+        long dataPos = out.getFilePointer();
+        keyLen = (int) (dataPos - seekKey);
+        // Write all the objects associated with this record into a new DataBuffer
+        // TODO: Is there any reason to buffer if we are not going to compress?
+        RootBufferedOutputStream buffer = new RootBufferedOutputStream(tFile, keyLen, suppressStreamerInfo);
         for (Object object : objects) {
-            dataBuffer.writeObject(object);
+            buffer.writeObject(object);
         }
-        dataBuffer.close();
-        dataBuffer.writeTo(out, tFile.getCompressionLevel());
-        long endPos = out.position();
-        objLen = dataBuffer.uncompressedSize();
+        buffer.close();
+        buffer.writeTo(out, tFile.getCompressionLevel());
+        long endPos = out.getFilePointer();
+        objLen = buffer.uncompressedSize();
         size = (int) (endPos - seekKey);
-        keyBuffer.seek(0);
-        keyBuffer.writeInt(size); // Length of compressed object
-        keyBuffer.writeShort(keyVersion); // TKey version identifier
-        keyBuffer.writeInt(objLen); // Length of uncompressed object
-        keyBuffer.writeObject(fDatimeC); // Date and time when object was written to file
-        keyBuffer.writeShort(keyLen); // Length of the key structure (in bytes)
-        keyBuffer.writeShort(cycle); // Cycle of key
-        keyBuffer.seek(keyLen);
-        out.position(seekKey);
-        keyBuffer.writeTo(out,0);
-        out.position(endPos);
+        out.seek(seekKey);
+        out.writeInt(size); // Length of compressed object
+        out.writeShort(keyVersion); // TKey version identifier
+        out.writeInt(objLen); // Length of uncompressed object
+        out.writeObject(fDatimeC); // Date and time when object was written to file
+        out.writeShort(keyLen); // Length of the key structure (in bytes)
+        out.writeShort(cycle); // Cycle of key
+        out.seek(endPos);
     }
     
-    void rewrite(SeekableByteChannel out) throws IOException {
-        out.position(fSeekKey.get());
+    void rewrite(RootRandomAccessFile out) throws IOException {
+        out.seek(fSeekKey.get());
         writeRecord(out);
     }
 

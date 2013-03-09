@@ -8,8 +8,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import hep.io.root.output.classes.TString;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
 import java.util.zip.Deflater;
 
 /**
@@ -55,7 +53,7 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
         return tFile.isLargeFile();
     }
 
-    void writeTo(SeekableByteChannel out, int compressionLevel) throws IOException {
+    void writeTo(RootOutputNonPublic out, int compressionLevel) throws IOException {
         buffer.writeTo(out,compressionLevel);
     }
     
@@ -173,38 +171,39 @@ class RootBufferedOutputStream extends DataOutputStream implements RootOutputNon
 
     private static class RootByteArrayOutputStream extends ByteArrayOutputStream {
 
-        private void writeTo(SeekableByteChannel out, int compressionLevel) throws IOException {
+        private void writeTo(RootOutputNonPublic out, int compressionLevel) throws IOException {
             if (compressionLevel == 0 || count<200) {
-                out.write(ByteBuffer.wrap(buf, 0, count));
+                out.write(buf, 0, count);
             } else {
-                long startPos = out.position();
-                out.position(startPos+9);
+                out.writeByte('Z');
+                out.writeByte('L');
+                out.writeByte(8); // Method
+                
+                long compressedSizePos = out.getFilePointer();
+                out.writeByte(0);
+                out.writeByte(0);
+                out.writeByte(0);
+
+                out.writeByte(count & 0xff);
+                out.writeByte((count>>8) & 0xff);
+                out.writeByte((count>>16) & 0xff);
+
                 Deflater deflater = new Deflater(compressionLevel,false);
                 deflater.setInput(buf,0,count);
                 deflater.finish();
-                ByteBuffer buffer = ByteBuffer.allocate(Math.min(32768, count));
+                byte[] buffer = new byte[Math.min(32768, count)];
                 while(!deflater.finished()) {
-                    int l = deflater.deflate(buffer.array());
-                    buffer.limit(l);
-                    out.write(buffer);
+                    int l = deflater.deflate(buffer);
+                    out.write(buffer,0,l);
                 }
                 deflater.end();
-                long endPos = out.position();
-                int size = (int) (endPos-startPos-9);
-                buffer.clear();
-                buffer.put((byte) 'Z');
-                buffer.put((byte) 'L');
-                buffer.put((byte) 8); // Method
-                buffer.put((byte) (size & 0xff));
-                buffer.put((byte) ((size>>8) & 0xff));
-                buffer.put((byte) ((size>>16) & 0xff));
-                buffer.put((byte) (count & 0xff));
-                buffer.put((byte) ((count>>8) & 0xff));
-                buffer.put((byte) ((count>>16) & 0xff));
-                buffer.flip();
-                out.position(startPos);
-                out.write(buffer);
-                out.position(endPos);
+                long endPos = out.getFilePointer();
+                int size = (int) (endPos-compressedSizePos-6);
+                out.seek(compressedSizePos);
+                out.writeByte(size & 0xff);
+                out.writeByte((size>>8) & 0xff);
+                out.writeByte((size>>16) & 0xff);
+                out.seek(endPos);
             }
         }
 
