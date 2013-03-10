@@ -6,6 +6,7 @@ import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import hep.io.root.output.demo.SimpleHistogramFiller;
+import org.junit.Before;
 
 /**
  *
@@ -13,10 +14,14 @@ import hep.io.root.output.demo.SimpleHistogramFiller;
  */
 public class HistogramTest {
 
+    @Before
+    public void setup() {
+        TFile.setTimeWarp(true);
+    }
+
     @Test
     public void test1() throws IOException {
 
-        TFile.setTimeWarp(true);
         File tmp = File.createTempFile("histogram", "root");
         tmp.deleteOnExit();
         try (TFile file = new TFile(tmp)) {
@@ -27,10 +32,10 @@ public class HistogramTest {
         }
         assertEquals(4053281214L, POJOTest.computeChecksum(tmp));
     }
+
     @Test
     public void test2() throws IOException {
 
-        TFile.setTimeWarp(true);
         File tmp = File.createTempFile("histogram", "root");
         tmp.deleteOnExit();
         try (TFile file = new TFile(tmp)) {

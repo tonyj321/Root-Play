@@ -3,16 +3,18 @@ package hep.io.root.output;
 import hep.io.root.output.classes.TList;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import hep.io.root.output.annotations.ClassDef;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 /**
@@ -50,28 +52,44 @@ public class TFile extends TDirectory implements Closeable {
      * Open a new file for writing, or overwrite an existing file.
      *
      * @param file The file to create, or overwrite.
-     * @throws FileNotFoundException
      * @throws IOException
      */
     public TFile(String file) throws IOException {
         this(new File(file));
     }
 
+    public static TFile open(String fileOrURI) throws IOException {
+        try {
+            URI uri = new URI(fileOrURI);
+            if (uri.getScheme() != null) {
+                return new TFile(uri);
+            }
+        } catch (URISyntaxException x) {
+            // Never mind, continue and try as File
+        }
+        return new TFile(fileOrURI);
+    }
+
     /**
      * Open a new file for writing, or overwrite an existing file.
      *
      * @param file
-     * @throws FileNotFoundException
      * @throws IOException
      */
     public TFile(File file) throws IOException {
         this(file.toPath());
     }
+
     public TFile(Path path) throws IOException {
-        this(Files.newByteChannel(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING),path.getFileName().toString());
+        this(Files.newByteChannel(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING), path.getFileName().toString());
     }
+
+    public TFile(URI uri) throws IOException {
+        this(Paths.get(uri));
+    }
+
     public TFile(SeekableByteChannel channel, String name) {
-        
+
         super(nameWarp == null ? name : nameWarp, "", null);
         this.channel = channel;
         addOwnRecords(Pointer.ZERO);
@@ -126,7 +144,7 @@ public class TFile extends TDirectory implements Closeable {
      * @throws IOException
      */
     private void writeHeader() throws IOException {
-        RootBufferedOutputStream out = new RootBufferedOutputStream(this,0,true);
+        RootBufferedOutputStream out = new RootBufferedOutputStream(this, 0, true);
         out.writeByte('r');
         out.writeByte('o');
         out.writeByte('o');
@@ -144,7 +162,7 @@ public class TFile extends TDirectory implements Closeable {
         out.writeObject(fNbytesInfo);     // Number of bytes in TStreamerInfo record
         out.writeObject(getUUID());
         channel.position(0);
-        out.writeTo(channel,0);
+        out.writeTo(channel, 0);
     }
 
     /**
@@ -156,19 +174,23 @@ public class TFile extends TDirectory implements Closeable {
     boolean isLargeFile() {
         return largeFile;
     }
+
     /**
      * Get the current compression level
+     *
      * @return The compression level
      */
     public int getCompressionLevel() {
         return fCompress;
     }
+
     /**
      * Set the compression level for this file.
+     *
      * @param level Compression level, currently must be between 0 and 9
      */
     public void setCompressionLevel(int level) {
-        if (level<0 || level>9) {
+        if (level < 0 || level > 9) {
             throw new IllegalArgumentException("fCompress<0 || fCompress>9");
         }
         this.fCompress = level;
@@ -180,16 +202,16 @@ public class TFile extends TDirectory implements Closeable {
 
     TKey addRecord(Class objectClass, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
         TKey tKey = new TKey(this, objectClass, fName, fTitle, fSeekDir, suppressStreamerInfo);
-        dataRecords.add(tKey); 
+        dataRecords.add(tKey);
         return tKey;
     }
 
     TKey addKeyListRecord(Class objectClass, String fName, String fTitle, Pointer fSeekDir, boolean suppressStreamerInfo) {
         TKey tKey = new TKey(this, objectClass, fName, fTitle, fSeekDir, suppressStreamerInfo);
-        keyRecords.add(tKey); 
+        keyRecords.add(tKey);
         return tKey;
     }
-    
+
     /**
      * Just for testing, sets all timestamps, UUID's and filenames in the file
      * to arbitrary fixed values, so that the file is reproducible.
@@ -210,5 +232,5 @@ public class TFile extends TDirectory implements Closeable {
         out.writeObject(getName());
         out.writeObject(getTitle());
         super.streamer(out);
-    }  
+    }
 }

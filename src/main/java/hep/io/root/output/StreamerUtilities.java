@@ -15,4 +15,7 @@ class StreamerUtilities {
         classInfo.resolveDependencies();
         return new TStreamerInfo(classInfo);
     }
+
+    private StreamerUtilities() {
+    }
 }
