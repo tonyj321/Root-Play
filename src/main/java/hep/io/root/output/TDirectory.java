@@ -8,6 +8,7 @@ import hep.io.root.output.annotations.ClassDef;
 import hep.io.root.output.classes.TDatime;
 import hep.io.root.output.classes.TNamed;
 import hep.io.root.output.classes.TUUID;
+import java.util.HashMap;
 
 /**
  * Represents a directory within a root file. There is always a top-level
@@ -34,6 +35,7 @@ public class TDirectory extends TNamed {
     private TUUID fUUID = new TUUID(uuidWarp);
     private KeyList keyList = new KeyList();
     private final TDirectory parent;
+    private final HashMap<String, TDirectory> subdirectories = new HashMap<String, TDirectory>();
 
     TDirectory(String name, String title, TDirectory parent) {
         super(name, title);
@@ -80,6 +82,38 @@ public class TDirectory extends TNamed {
         keyList.add(record);
     }
 
+    public TDirectory findDir(String name) {
+        return findDir(name, false);
+    }
+
+    /**
+     * Search this directory for a subdirectory
+     *
+     * @param path The path to search for, / delimited.
+     * @param recursive If <code>true</code>then search recursively into
+     * subdirectories.
+     * @return The TDirectory found, or <code>null</code> if no directory found.
+     */
+    public TDirectory findDir(String path, boolean recursive) {
+        if (recursive) {
+            String[] pathElements = parsePath(path);
+            TDirectory current = this;
+            for (String element : pathElements) {
+                current = current.findDir(element, false);
+                if (current == null) {
+                    return null;
+                }
+            }
+            return current;
+        } else {
+            return subdirectories.get(path);
+        }
+    }
+
+    private String[] parsePath(String path) {
+        return path.split("/");
+    }
+
     /**
      * Add a new subdirectory to this directory. The returned TDirectory should
      * be used to add items to the newly created subdirectory.
@@ -88,10 +122,29 @@ public class TDirectory extends TNamed {
      * @return The newly created subdirectory
      */
     public TDirectory mkdir(String name) {
-        TDirectory newDir = new TDirectory(name, "", this);
-        newDir.addOwnRecords(fSeekDir);
-        keyList.add(newDir.directoryRecord);
-        return newDir;
+        return mkdir(name, false);
+    }
+
+    public TDirectory mkdir(String path, boolean recursive) {
+        if (recursive) {
+            String[] pathElements = parsePath(path);
+            TDirectory current = this;
+            for (String element : pathElements) {
+                TDirectory next = current.findDir(element, false);
+                if (next == null) {
+                    next = current.mkdir(element,false);
+                }
+                current = next;
+            }
+            return current;
+        } else {
+            // TODO: Check if name already exists, and if so throw error
+            TDirectory newDir = new TDirectory(path, "", this);
+            newDir.addOwnRecords(fSeekDir);
+            keyList.add(newDir.directoryRecord);
+            subdirectories.put(path, newDir);
+            return newDir;
+        }
     }
 
     /**
@@ -132,8 +185,10 @@ public class TDirectory extends TNamed {
             }
         }
     }
+
     /**
-     * Used to remove unpredictable elements from the file during testing 
+     * Used to remove unpredictable elements from the file during testing
+     *
      * @param testMode <code>true</code> to used fixed timestamps/uuid
      */
     static void setTimeWarp(boolean testMode) {
