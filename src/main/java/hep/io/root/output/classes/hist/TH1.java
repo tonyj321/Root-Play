@@ -29,11 +29,11 @@ public class TH1 extends TNamed {
     @Super
     private TAttMarker tAttMarker = new TAttMarker();
     @Title("number of bins(1D), cells (2D) +U/Overflows")
-    private int fNcells;
+    int fNcells;
     @Title("X axis descriptor")
     private TAxis fXaxis;
     @Title("Y axis descriptor")
-    private TAxis fYaxis;
+    TAxis fYaxis;
     @Title("Z axis descriptor")
     private TAxis fZaxis;
     @Title("(1000*offset) for bar charts or legos")

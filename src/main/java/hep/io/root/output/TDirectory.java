@@ -57,6 +57,7 @@ public class TDirectory extends TNamed {
         this.fSeekDir = directoryRecord.getSeekKey();
         seekKeysRecord = tFile.addKeyListRecord(getClass(), getName(), getTitle(), fSeekDir, true);
         seekKeysRecord.add(keyList);
+        seekKeysRecord.setCompressionLevel(0);
         fSeekKeys = seekKeysRecord.getSeekKey();
     }
 

@@ -2,20 +2,24 @@ package hep.io.root.output.demo;
 
 import java.util.Random;
 import hep.io.root.output.classes.hist.TH1D;
+import hep.io.root.output.classes.hist.TH2D;
 
 /**
  *
  * @author tonyj
  */
 public class SimpleHistogramFiller {
+
     private final Random random;
 
     public SimpleHistogramFiller() {
         this(new Random());
     }
+
     public SimpleHistogramFiller(Random random) {
         this.random = random;
     }
+
     public TH1D create1DHistogram(String name, String title) {
         int nBins = 100;
         double[] data = new double[nBins + 2];
@@ -40,5 +44,45 @@ public class SimpleHistogramFiller {
         th1d.setSumx(sumx);
         th1d.setSumx2(sumx2);
         return th1d;
+    }
+
+    public TH2D create2DHistogram(String name, String title) {
+        int nXBins = 100;
+        int nYBins = 100;
+        double[] data = new double[(nXBins + 2) * (nYBins + 2)];
+        double xMin = -5;
+        double xMax = 5;
+        double yMin = -5;
+        double yMax = 5;
+        final int entries = 100000;
+        double sumx = 0;
+        double sumx2 = 0;
+        double sumy = 0;
+        double sumy2 = 0;
+        double sumxy = 0;
+
+        for (int i = 0; i < entries; i++) {
+            double x = random.nextGaussian();
+            double y = random.nextGaussian();
+            sumx += x;
+            sumx2 += x * x;
+            sumy += y;
+            sumy2 += y * y;
+            sumxy += x * y;
+            int xBin = (int) Math.floor(nXBins * (x - xMin) / (xMax - xMin));
+            int yBin = (int) Math.floor(nXBins * (y - yMin) / (yMax - yMin));
+            data[1 + xBin + (1 + yBin) * (nXBins + 2)]++;
+        }
+        TH2D th2d = new TH2D(name, nXBins, xMin, xMax, nYBins, yMin, yMax, data);
+        th2d.setTitle(title);
+        th2d.setEntries(entries);
+        th2d.setSumw(entries);
+        th2d.setSumw2(entries);
+        th2d.setSumx(sumx);
+        th2d.setSumx2(sumx2);
+        th2d.setSumy(sumy);
+        th2d.setSumy2(sumy2);
+        th2d.setSumxy(sumxy);
+        return th2d;
     }
 }

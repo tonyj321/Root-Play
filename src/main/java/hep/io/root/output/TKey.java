@@ -26,6 +26,7 @@ class TKey extends TNamed {
     // Indicates that classes written to this record should not cause
     // streamer infos to be added to the file.
     private boolean suppressStreamerInfo = false;
+    private int compressionLevel = -1;
     private TFile tFile;
 
     /**
@@ -72,7 +73,7 @@ class TKey extends TNamed {
             buffer.writeObject(object);
         }
         buffer.close();
-        buffer.writeTo(out, tFile.getCompressionLevel());
+        buffer.writeTo(out, compressionLevel<0 ? tFile.getCompressionLevel() : compressionLevel);
         long endPos = out.getFilePointer();
         objLen = buffer.uncompressedSize();
         size = (int) (endPos - seekKey);
@@ -91,6 +92,10 @@ class TKey extends TNamed {
         writeRecord(out);
     }
 
+    void setCompressionLevel(int level) {
+        compressionLevel = level;
+    }
+    
     /**
      * The position of this record within the file. This method can be
      * called any time, but the return pointer will not be valid until the
