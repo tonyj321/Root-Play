@@ -35,7 +35,7 @@ public class TDirectory extends TNamed {
     private TUUID fUUID = new TUUID(uuidWarp);
     private KeyList keyList = new KeyList();
     private final TDirectory parent;
-    private final HashMap<String, TDirectory> subdirectories = new HashMap<String, TDirectory>();
+    private final HashMap<String, TDirectory> subdirectories = new HashMap<>();
 
     TDirectory(String name, String title, TDirectory parent) {
         super(name, title);
@@ -81,7 +81,11 @@ public class TDirectory extends TNamed {
         record.add(object);
         keyList.add(record);
     }
-
+    /**
+     * Search this directory for a named subdirectory. The search is not recursive.
+     * @param name The name of the subdirectory to search for.
+     * @return The TDirectory if found, or <code>null</code> if not found.
+     */
     public TDirectory findDir(String name) {
         return findDir(name, false);
     }
@@ -120,11 +124,21 @@ public class TDirectory extends TNamed {
      *
      * @param name The name of the new directory
      * @return The newly created subdirectory
+     * @throws IllegalArgumentException If the named directory already exists
      */
-    public TDirectory mkdir(String name) {
+    public TDirectory mkdir(String name) throws IllegalArgumentException {
         return mkdir(name, false);
     }
-
+    
+    /**
+     * Add a new subdirectory specified by path. 
+     * @param path Path to the directory, / delimited
+     * @param recursive If <code>true</code> any intermediate directories in the
+     * path will be created if necessary.
+     * @return The newly created TDirectory. 
+     * @throws IllegalArgumentException If an attempt is made to create a directory 
+     * which already exists. 
+     */
     public TDirectory mkdir(String path, boolean recursive) {
         if (recursive) {
             String[] pathElements = parsePath(path);
@@ -138,7 +152,9 @@ public class TDirectory extends TNamed {
             }
             return current;
         } else {
-            // TODO: Check if name already exists, and if so throw error
+            if (subdirectories.containsKey(path)) {
+                throw new IllegalArgumentException("Directory "+path+" already exists");
+            }
             TDirectory newDir = new TDirectory(path, "", this);
             newDir.addOwnRecords(fSeekDir);
             keyList.add(newDir.directoryRecord);
