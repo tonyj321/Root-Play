@@ -48,4 +48,49 @@ public class TAxis extends TNamed {
         this.fXmin = xMin;
         this.fXmax = xMax;
     }
+
+    public void settAttAxis(TAttAxis tAttAxis) {
+        this.tAttAxis = tAttAxis;
+    }
+
+    public void setfNbins(int fNbins) {
+        this.fNbins = fNbins;
+    }
+
+    public void setfXmin(double fXmin) {
+        this.fXmin = fXmin;
+    }
+
+    public void setfXmax(double fXmax) {
+        this.fXmax = fXmax;
+    }
+
+    public void setfXbins(TArrayD fXbins) {
+        this.fXbins = fXbins;
+    }
+
+    public void setfFirst(int fFirst) {
+        this.fFirst = fFirst;
+    }
+
+    public void setfLast(int fLast) {
+        this.fLast = fLast;
+    }
+
+    public void setfBits2(short fBits2) {
+        this.fBits2 = fBits2;
+    }
+
+    public void setfTimeDisplay(boolean fTimeDisplay) {
+        this.fTimeDisplay = fTimeDisplay;
+    }
+
+    public void setfTimeFormat(String fTimeFormat) {
+        this.fTimeFormat = fTimeFormat;
+    }
+
+    public void setfLabels(THashList fLabels) {
+        this.fLabels = fLabels;
+    }
+
 }

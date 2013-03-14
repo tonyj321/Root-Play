@@ -135,4 +135,191 @@ public class TH1 extends TNamed {
     public void setSumx2(double fTsumx2) {
         this.fTsumwx2 = fTsumx2;
     }
+    
+
+    public void settAttLine(TAttLine tAttLine) {
+        this.tAttLine = tAttLine;
+    }
+
+    public void settAttFill(TAttFill tAttFill) {
+        this.tAttFill = tAttFill;
+    }
+
+    public void settAttMarker(TAttMarker tAttMarker) {
+        this.tAttMarker = tAttMarker;
+    }
+
+    public void setfNcells(int fNcells) {
+        this.fNcells = fNcells;
+    }
+
+    public void setfXaxis(TAxis fXaxis) {
+        this.fXaxis = fXaxis;
+    }
+
+    public void setfYaxis(TAxis fYaxis) {
+        this.fYaxis = fYaxis;
+    }
+
+    public void setfZaxis(TAxis fZaxis) {
+        this.fZaxis = fZaxis;
+    }
+
+    public void setfBarOffset(short fBarOffset) {
+        this.fBarOffset = fBarOffset;
+    }
+
+    public void setfBarWidth(short fBarWidth) {
+        this.fBarWidth = fBarWidth;
+    }
+
+    public void setfEntries(double fEntries) {
+        this.fEntries = fEntries;
+    }
+
+    public void setfTsumw(double fTsumw) {
+        this.fTsumw = fTsumw;
+    }
+
+    public void setfTsumw2(double fTsumw2) {
+        this.fTsumw2 = fTsumw2;
+    }
+
+    public void setfTsumwx(double fTsumwx) {
+        this.fTsumwx = fTsumwx;
+    }
+
+    public void setfTsumwx2(double fTsumwx2) {
+        this.fTsumwx2 = fTsumwx2;
+    }
+
+    public void setfMaximum(double fMaximum) {
+        this.fMaximum = fMaximum;
+    }
+
+    public void setfMinimum(double fMinimum) {
+        this.fMinimum = fMinimum;
+    }
+
+    public void setfNormFactor(double fNormFactor) {
+        this.fNormFactor = fNormFactor;
+    }
+
+    public void setfContour(TArrayD fContour) {
+        this.fContour = fContour;
+    }
+
+    public void setfSumw2(TArrayD fSumw2) {
+        this.fSumw2 = fSumw2;
+    }
+
+    public void setfOption(String fOption) {
+        this.fOption = fOption;
+    }
+
+    public void setfFunctions(TList fFunctions) {
+        this.fFunctions = fFunctions;
+    }
+
+    public void setfBufferSize(int fBufferSize) {
+        this.fBufferSize = fBufferSize;
+    }
+
+    public void setfBuffer(double[] fBuffer) {
+        this.fBuffer = fBuffer;
+    }
+    
+
+    public TAttLine gettAttLine() {
+        return tAttLine;
+    }
+
+    public TAttFill gettAttFill() {
+        return tAttFill;
+    }
+
+    public TAttMarker gettAttMarker() {
+        return tAttMarker;
+    }
+
+    public int getfNcells() {
+        return fNcells;
+    }
+
+    public TAxis getfXaxis() {
+        return fXaxis;
+    }
+
+    public TAxis getfYaxis() {
+        return fYaxis;
+    }
+
+    public TAxis getfZaxis() {
+        return fZaxis;
+    }
+
+    public short getfBarOffset() {
+        return fBarOffset;
+    }
+
+    public short getfBarWidth() {
+        return fBarWidth;
+    }
+
+    public double getfEntries() {
+        return fEntries;
+    }
+
+    public double getfTsumw() {
+        return fTsumw;
+    }
+
+    public double getfTsumw2() {
+        return fTsumw2;
+    }
+
+    public double getfTsumwx() {
+        return fTsumwx;
+    }
+
+    public double getfTsumwx2() {
+        return fTsumwx2;
+    }
+
+    public double getfMaximum() {
+        return fMaximum;
+    }
+
+    public double getfMinimum() {
+        return fMinimum;
+    }
+
+    public double getfNormFactor() {
+        return fNormFactor;
+    }
+
+    public TArrayD getfContour() {
+        return fContour;
+    }
+
+    public TArrayD getfSumw2() {
+        return fSumw2;
+    }
+
+    public String getfOption() {
+        return fOption;
+    }
+
+    public TList getfFunctions() {
+        return fFunctions;
+    }
+
+    public int getfBufferSize() {
+        return fBufferSize;
+    }
+
+    public double[] getfBuffer() {
+        return fBuffer;
+    }
+
 }
