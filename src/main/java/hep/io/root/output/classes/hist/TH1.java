@@ -119,22 +119,6 @@ public class TH1 extends TNamed {
     public void setEntries(double fEntries) {
         this.fEntries = fEntries;
     }
-
-    public void setSumw(double fTsumw) {
-        this.fTsumw = fTsumw;
-    }
-
-    public void setSumw2(double fTsumw2) {
-        this.fTsumw2 = fTsumw2;
-    }
-
-    public void setSumx(double fTsumx) {
-        this.fTsumwx = fTsumx;
-    }
-
-    public void setSumx2(double fTsumx2) {
-        this.fTsumwx2 = fTsumx2;
-    }
     
 
     public void settAttLine(TAttLine tAttLine) {

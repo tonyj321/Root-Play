@@ -39,10 +39,10 @@ public class SimpleHistogramFiller {
         TH1D th1d = new TH1D(name, nBins, xMin, xMax, data);
         th1d.setTitle(title);
         th1d.setEntries(entries);
-        th1d.setSumw(entries);
-        th1d.setSumw2(entries);
-        th1d.setSumx(sumx);
-        th1d.setSumx2(sumx2);
+        th1d.setfTsumw(entries);
+        th1d.setfTsumw2(entries);
+        th1d.setfTsumwx(sumx);
+        th1d.setfTsumwx2(sumx2);
         return th1d;
     }
 
@@ -76,13 +76,13 @@ public class SimpleHistogramFiller {
         TH2D th2d = new TH2D(name, nXBins, xMin, xMax, nYBins, yMin, yMax, data);
         th2d.setTitle(title);
         th2d.setEntries(entries);
-        th2d.setSumw(entries);
-        th2d.setSumw2(entries);
-        th2d.setSumx(sumx);
-        th2d.setSumx2(sumx2);
-        th2d.setSumy(sumy);
-        th2d.setSumy2(sumy2);
-        th2d.setSumxy(sumxy);
+        th2d.setfTsumw(entries);
+        th2d.setfTsumw2(entries);
+        th2d.setfTsumwx(sumx);
+        th2d.setfTsumwx2(sumx2);
+        th2d.setfTsumwy(sumy);
+        th2d.setfTsumwy2(sumy2);
+        th2d.setfTsumwxy(sumxy);
         return th2d;
     }
 }

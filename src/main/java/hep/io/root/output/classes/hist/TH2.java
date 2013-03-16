@@ -28,19 +28,36 @@ public class TH2 extends TH1 {
         fNcells = (nXBins + 2) * (nYBins + 2);
     }
 
-    public void setScalefactor(double fScalefactor) {
+    public double getfScalefactor() {
+        return fScalefactor;
+    }
+
+    public void setfScalefactor(double fScalefactor) {
         this.fScalefactor = fScalefactor;
     }
 
-    public void setSumy(double fTsumwy) {
+    public double getfTsumwy() {
+        return fTsumwy;
+    }
+
+    public void setfTsumwy(double fTsumwy) {
         this.fTsumwy = fTsumwy;
     }
 
-    public void setSumy2(double fTsumwy2) {
+    public double getfTsumwy2() {
+        return fTsumwy2;
+    }
+
+    public void setfTsumwy2(double fTsumwy2) {
         this.fTsumwy2 = fTsumwy2;
     }
 
-    public void setSumxy(double fTsumwxy) {
+    public double getfTsumwxy() {
+        return fTsumwxy;
+    }
+
+    public void setfTsumwxy(double fTsumwxy) {
         this.fTsumwxy = fTsumwxy;
     }
+
 }
