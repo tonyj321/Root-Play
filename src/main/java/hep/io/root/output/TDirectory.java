@@ -95,7 +95,7 @@ public class TDirectory extends TNamed {
      * Search this directory for a subdirectory
      *
      * @param path The path to search for, / delimited.
-     * @param recursive If <code>true</code>then search recursively into
+     * @param recursive If <code>true</code> then search recursively into
      * subdirectories.
      * @return The TDirectory found, or <code>null</code> if no directory found.
      */

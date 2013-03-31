@@ -14,7 +14,7 @@ import hep.io.root.output.annotations.Title;
  * @author tonyj
  */
 class StreamerFieldInfo {
-    
+
     private final StreamerClassInfo parentClassInfo;
     private final Field field;
     private final String title;
@@ -46,7 +46,7 @@ class StreamerFieldInfo {
                 throw new StreamerInfoException("Reference to non-existent or non-integer element " + counter);
             }
             cInfo.type = Type.kCounter;
-        }        
+        }
         FieldType typeAnnotation = f.getAnnotation(FieldType.class);
         Type explicitType = typeAnnotation == null ? null : typeAnnotation.value();
         if (explicitType == null) {
@@ -78,7 +78,7 @@ class StreamerFieldInfo {
 
     String getTypeName() {
         String name = type.getName() == null ? fieldClassInfo.getName() : type.getName();
-        if (isArray() || type==Type.kObjectp || type==Type.kObjectP) {
+        if (isArray() || type == Type.kObjectp || type == Type.kObjectP) {
             name += "*";
         }
         return name;
@@ -123,12 +123,13 @@ class StreamerFieldInfo {
     int getSize() {
         return type.getSize();
     }
-    
+
     /**
-     * Write a single field of an object to the output stream using the information
-     * in the streamer element.
+     * Write a single field of an object to the output stream using the
+     * information in the streamer element.
+     *
      * @param out
-     * @param object 
+     * @param object
      */
     void write(RootOutput out, Object object) throws IOException {
         try {
@@ -149,6 +150,9 @@ class StreamerFieldInfo {
                 case kBool:
                     out.writeByte(field.getBoolean(object) ? 1 : 0);
                     break;
+                case kEnum:
+                    out.writeInt(((Enum) field.get(object)).ordinal());
+                    break;
                 case kAny:
                 case kTString:
                     out.writeObject(field.get(object));
@@ -158,10 +162,10 @@ class StreamerFieldInfo {
                     out.writeObjectRef(field.get(object));
                     break;
                 default:
-                    throw new IOException("Unable to handle field "+field.getName()+" of type "+type);
-            }        
+                    throw new IOException("Unable to handle field " + field.getName() + " of type " + type);
+            }
         } catch (IllegalArgumentException | IllegalAccessException x) {
-            throw new IOException("Unable to stream field: "+ field.getName(),x);
+            throw new IOException("Unable to stream field: " + field.getName(), x);
         }
     }
 }
