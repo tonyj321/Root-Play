@@ -10,31 +10,40 @@ import hep.io.root.output.classes.TArrayD;
  * @see <a href="http://root.cern.ch/root/htmldoc/TProfile.html">TProfile</a>
  * @author onoprien
  */
-@ClassDef(version = 1)
+@ClassDef(version = 6, checkSum=-1823164045)
 @Title("1-Dim profile class")
 public class TProfile extends TH1D {
 
-    @Title("number of entries per bin")
-    protected TArrayD fBinEntries;
-    @Title("Array of sum of squares of weights per bin")
-    protected TArrayD fBinSumw2;
-//    @Title("Option to compute errors")
-//    protected EErrorType fErrorMode;
-    @Title("!True when TProfile::Scale is called")
-    protected boolean fScaling;
-    @Title("Total Sum of weight*Y")
-    protected double fTsumwy;
-    @Title("Total Sum of weight*Y*Y")
-    protected double fTsumwy2;
-    @Title("Upper limit in Y (if set)")
-    protected double fYmax;
-    @Title("Lower limit in Y (if set)")
-    protected double fYmin;
-    @Title("bin error approximation option")
-    static protected boolean fgApproximate;
+    public enum EErrorType {
 
-    public TProfile(String name, int nBins, double xMin, double xMax, double[] data) {
+        kERRORMEAN, kERRORSPREAD, kERRORSPREADI, kERRORSPREADG
+    };
+    @Title("number of entries per bin")
+    private TArrayD fBinEntries;
+    @Title("Option to compute errors")
+    private EErrorType fErrorMode = EErrorType.kERRORMEAN;
+    @Title("Lower limit in Y (if set)")
+    private double fYmin;
+    @Title("Upper limit in Y (if set)")
+    private double fYmax;
+    @Title("Total Sum of weight*Y")
+    private double fTsumwy;
+    @Title("Total Sum of weight*Y*Y")
+    private double fTsumwy2;
+    @Title("Array of sum of squares of weights per bin")
+    private TArrayD fBinSumw2;
+
+    public TProfile(String name, int nBins, double xMin, double xMax, double[] data, double[] entries, double[] w2) {
         super(name, nBins, xMin, xMax, data);
+        this.fBinEntries = new TArrayD(entries);
+        setfSumw2(new TArrayD(w2));
     }
-   
+
+    public void setfTsumwy(double sumy) {
+        this.fTsumwy = sumy;
+    }
+
+    public void setfTsumwy2(double sumy2) {
+        this.fTsumwy2 = sumy2;
+    }
 }

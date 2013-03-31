@@ -3,6 +3,7 @@ package hep.io.root.output.demo;
 import java.util.Random;
 import hep.io.root.output.classes.hist.TH1D;
 import hep.io.root.output.classes.hist.TH2D;
+import hep.io.root.output.classes.hist.TProfile;
 
 /**
  *
@@ -84,5 +85,43 @@ public class SimpleHistogramFiller {
         th2d.setfTsumwy2(sumy2);
         th2d.setfTsumwxy(sumxy);
         return th2d;
+    }
+
+    public TProfile createProfile(String name, String title) {
+        int nBins = 100;
+        double[] data = new double[nBins + 2];
+        double[] entries = new double[nBins + 2];
+        double[] w2 = new double[nBins + 2];
+        double xMin = -5;
+        double xMax = 5;
+        final int nEntries = 25000;
+        double sumx = 0;
+        double sumx2 = 0;
+        double sumy = 0;
+        double sumy2 = 0;
+
+        for (int i = 0; i < nEntries; i++) {
+            double px = random.nextGaussian();
+            double py = random.nextGaussian();
+            double pz = px * px + py * py;
+            sumx += px;
+            sumx2 += px * px;
+            sumy += pz;
+            sumy2 += pz * pz;
+            int bin = (int) Math.floor(nBins * (px - xMin) / (xMax - xMin));
+            data[1 + bin] += pz;
+            w2[1 + bin] += pz*pz;
+            entries[1 + bin]++;
+        }
+        TProfile profile = new TProfile(name, nBins, xMin, xMax, data, entries, w2);
+        profile.setTitle(title);
+        profile.setEntries(nEntries);
+        profile.setfTsumw(nEntries);
+        profile.setfTsumw2(nEntries);
+        profile.setfTsumwx(sumx);
+        profile.setfTsumwx2(sumx2);
+        profile.setfTsumwy(sumy);
+        profile.setfTsumwy2(sumy2);
+        return profile; 
     }
 }

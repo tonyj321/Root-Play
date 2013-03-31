@@ -17,6 +17,7 @@ public class HistogramDemo {
             file.add(demo.create1DHistogram("test1","Histogram created from Java"));
             file.add(demo.create1DHistogram("test2","Histogram created from Java"));
             file.add(demo.create2DHistogram("test3","Histogram created from Java"));
+            file.add(demo.createProfile("test4","Profile created from Java"));
         }
     }
 }
