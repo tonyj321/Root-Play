@@ -89,8 +89,9 @@ public class SimpleHistogramFiller {
 
     public TProfile createProfile(String name, String title) {
         int nBins = 100;
-        double[] data = new double[nBins + 2];
-        double[] entries = new double[nBins + 2];
+        double[] yw = new double[nBins + 2];
+        double[] yyw = new double[nBins + 2];
+        double[] w = new double[nBins + 2];
         double[] w2 = new double[nBins + 2];
         double xMin = -5;
         double xMax = 5;
@@ -109,11 +110,12 @@ public class SimpleHistogramFiller {
             sumy += pz;
             sumy2 += pz * pz;
             int bin = (int) Math.floor(nBins * (px - xMin) / (xMax - xMin));
-            data[1 + bin] += pz;
-            w2[1 + bin] += pz*pz;
-            entries[1 + bin]++;
+            w[1 + bin] += 1.;
+            w2[1 + bin] += 1.;
+            yw[1 + bin] += pz;
+            yyw[1 + bin] += pz*pz;
         }
-        TProfile profile = new TProfile(name, nBins, xMin, xMax, data, entries, w2);
+        TProfile profile = new TProfile(name, nBins, xMin, xMax, yyw, yw, w, w2);
         profile.setTitle(title);
         profile.setEntries(nEntries);
         profile.setfTsumw(nEntries);
