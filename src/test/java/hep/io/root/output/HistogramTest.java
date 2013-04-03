@@ -67,6 +67,6 @@ public class HistogramTest {
             SimpleHistogramFiller demo = new SimpleHistogramFiller(new Random(123456));
             file.add(demo.createProfile("test4", "Profile created from Java"));
         }
-        assertEquals(1858709415L, POJOTest.computeChecksum(tmp));
+        assertEquals(848739441L, POJOTest.computeChecksum(tmp));
     }
 }
