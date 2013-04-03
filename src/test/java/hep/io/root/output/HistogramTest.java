@@ -69,4 +69,17 @@ public class HistogramTest {
         }
         assertEquals(848739441L, POJOTest.computeChecksum(tmp));
     }
+
+    @Test
+    public void test5() throws IOException {
+
+        TFile.setTimeWarp(true);
+        File tmp = File.createTempFile("histogram", "root");
+        tmp.deleteOnExit();
+        try (TFile file = new TFile(tmp)) {
+            SimpleHistogramFiller demo = new SimpleHistogramFiller(new Random(123456));
+            file.add(demo.createProfile2D("test5", "Profile created from Java"));
+        }
+        assertEquals(3333471590L, POJOTest.computeChecksum(tmp));
+    }
 }

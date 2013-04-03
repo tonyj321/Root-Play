@@ -4,6 +4,7 @@ import java.util.Random;
 import hep.io.root.output.classes.hist.TH1D;
 import hep.io.root.output.classes.hist.TH2D;
 import hep.io.root.output.classes.hist.TProfile;
+import hep.io.root.output.classes.hist.TProfile2D;
 
 /**
  *
@@ -113,7 +114,7 @@ public class SimpleHistogramFiller {
             w[1 + bin] += 1.;
             w2[1 + bin] += 1.;
             yw[1 + bin] += pz;
-            yyw[1 + bin] += pz*pz;
+            yyw[1 + bin] += pz * pz;
         }
         TProfile profile = new TProfile(name, nBins, xMin, xMax, yyw, yw, w, w2);
         profile.setTitle(title);
@@ -124,6 +125,58 @@ public class SimpleHistogramFiller {
         profile.setfTsumwx2(sumx2);
         profile.setfTsumwy(sumy);
         profile.setfTsumwy2(sumy2);
-        return profile; 
+        return profile;
+    }
+
+    public TProfile2D createProfile2D(String name, String title) {
+        int nXBins = 100;
+        int nYBins = 100;
+        int nBins = (nXBins + 2) * (nYBins + 2);
+        double[] zw = new double[nBins];
+        double[] zzw = new double[nBins];
+        double[] w = new double[nBins];
+        double[] w2 = new double[nBins];
+        double xMin = -5;
+        double xMax = 5;
+        double yMin = -5;
+        double yMax = 5;
+        final int nEntries = 25000;
+        double sumx = 0;
+        double sumx2 = 0;
+        double sumy = 0;
+        double sumy2 = 0;
+        double sumz = 0;
+        double sumz2 = 0;
+
+        for (int i = 0; i < nEntries; i++) {
+            double px = random.nextGaussian();
+            double py = random.nextGaussian();
+            double pz = px * px + py * py;
+            sumx += px;
+            sumx2 += px * px;
+            sumy += py;
+            sumy2 += py * py;
+            sumz += pz;
+            sumz2 += pz * pz;
+            int xBin = (int) Math.floor(nXBins * (px - xMin) / (xMax - xMin));
+            int yBin = (int) Math.floor(nXBins * (py - yMin) / (yMax - yMin));
+            int bin = 1 + xBin + (1 + yBin) * (nXBins + 2);
+            w[bin] += 1.;
+            w2[bin] += 1.;
+            zw[bin] += pz;
+            zzw[bin] += pz * pz;
+        }
+        TProfile2D profile = new TProfile2D(name, nXBins, xMin, xMax, nYBins, yMin, yMax, zzw, zw, w, w2);
+        profile.setTitle(title);
+        profile.setEntries(nEntries);
+        profile.setfTsumw(nEntries);
+        profile.setfTsumw2(nEntries);
+        profile.setfTsumwx(sumx);
+        profile.setfTsumwx2(sumx2);
+        profile.setfTsumwy(sumy);
+        profile.setfTsumwy2(sumy2);
+        profile.setfTsumwz(sumz);
+        profile.setfTsumwz2(sumz2);
+        return profile;
     }
 }

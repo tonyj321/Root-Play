@@ -14,10 +14,6 @@ import hep.io.root.output.classes.TArrayD;
 @Title("1-Dim profile class")
 public class TProfile extends TH1D {
 
-    public enum EErrorType {
-
-        kERRORMEAN, kERRORSPREAD, kERRORSPREADI, kERRORSPREADG
-    };
     @Title("number of entries per bin")
     private TArrayD fBinEntries;
     @Title("Option to compute errors")
@@ -32,12 +28,6 @@ public class TProfile extends TH1D {
     private double fTsumwy2;
     @Title("Array of sum of squares of weights per bin")
     private TArrayD fBinSumw2;
-
-//    public TProfile(String name, int nBins, double xMin, double xMax, double[] data, double[] entries, double[] w2) {
-//        super(name, nBins, xMin, xMax, data);
-//        this.fBinEntries = new TArrayD(entries);
-//        setfSumw2(new TArrayD(w2));
-//    }
 
     public TProfile(String name, int nBins, double xMin, double xMax, double[] yyw, double[] yw, double[] w, double[] w2) {
         super(name, nBins, xMin, xMax, yw);
